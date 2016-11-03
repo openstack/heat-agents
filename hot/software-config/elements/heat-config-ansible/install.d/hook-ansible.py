@@ -50,6 +50,8 @@ def main(argv=sys.argv):
     for input in c['inputs']:
         variables[input['name']] = input.get('value', '')
 
+    tags = c['options'].get('tags')
+
     fn = os.path.join(WORKING_DIR, '%s_playbook.yaml' % c['id'])
     vars_filename = os.path.join(WORKING_DIR, '%s_variables.json' % c['id'])
     heat_outputs_path = os.path.join(OUTPUTS_DIR, c['id'])
@@ -75,6 +77,9 @@ def main(argv=sys.argv):
         '--extra-vars',
         '@%s' % vars_filename
     ]
+    if tags:
+        cmd.insert(-1, '--tags')
+        cmd.insert(-1, tags)
     log.debug('Running %s' % (' '.join(cmd),))
     try:
         subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
