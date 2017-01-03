@@ -19,7 +19,7 @@ import tempfile
 import fixtures
 from testtools import matchers
 
-from tests.software_config import common
+from tests import common
 
 
 class HookDockerCmdTest(common.RunScriptTest):
@@ -55,14 +55,13 @@ class HookDockerCmdTest(common.RunScriptTest):
         super(HookDockerCmdTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-docker-cmd/install.d/hook-docker-cmd.py')
 
         self.cleanup_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements/heat-config-docker-cmd/',
+            '..',
+            'heat-config-docker-cmd/',
             'os-refresh-config/configure.d/50-heat-config-docker-cmd')
 
         self.fake_tool_path = self.relative_path(

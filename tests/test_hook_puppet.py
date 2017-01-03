@@ -17,7 +17,7 @@ import os
 
 import fixtures
 
-from tests.software_config import common
+from tests import common
 
 
 class HookPuppetTest(common.RunScriptTest):
@@ -48,8 +48,7 @@ class HookPuppetTest(common.RunScriptTest):
         super(HookPuppetTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-puppet/install.d/hook-puppet.py')
 
         self.fake_tool_path = self.relative_path(

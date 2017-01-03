@@ -18,7 +18,7 @@ import tempfile
 import fixtures
 import yaml
 
-from tests.software_config import common
+from tests import common
 
 
 class HeatConfigDockerComposeORCTest(common.RunScriptTest):
@@ -72,8 +72,7 @@ class HeatConfigDockerComposeORCTest(common.RunScriptTest):
         self.fake_hook_path = self.relative_path(__file__, 'hook-fake.py')
         self.heat_config_docker_compose_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-docker-compose/os-refresh-config/configure.d/'
             '50-heat-config-docker-compose')
 

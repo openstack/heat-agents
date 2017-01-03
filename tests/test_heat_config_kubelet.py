@@ -18,7 +18,7 @@ import tempfile
 import fixtures
 from testtools import matchers
 
-from tests.software_config import common
+from tests import common
 
 
 class HeatConfigKubeletORCTest(common.RunScriptTest):
@@ -99,8 +99,7 @@ class HeatConfigKubeletORCTest(common.RunScriptTest):
 
         self.heat_config_kubelet_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-kubelet/os-refresh-config/configure.d/'
             '50-heat-config-kubelet')
 

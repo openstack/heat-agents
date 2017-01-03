@@ -17,7 +17,7 @@ import logging
 import os
 import yaml
 
-from tests.software_config import common
+from tests import common
 
 log = logging.getLogger('test_hook_salt')
 
@@ -64,8 +64,7 @@ class HookSaltTest(common.RunScriptTest):
         super(HookSaltTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-salt/install.d/hook-salt.py')
 
         self.working_dir = self.useFixture(fixtures.TempDir())

@@ -16,7 +16,7 @@ import os
 
 import fixtures
 
-from tests.software_config import common
+from tests import common
 
 
 class HookDockerComposeTest(common.RunScriptTest):
@@ -72,8 +72,7 @@ class HookDockerComposeTest(common.RunScriptTest):
         super(HookDockerComposeTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-docker-compose/install.d/hook-docker-compose.py')
 
         self.fake_tool_path = self.relative_path(

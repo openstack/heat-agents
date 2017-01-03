@@ -18,8 +18,8 @@ import tempfile
 import fixtures
 import mock
 
-from tests.software_config import common
-from tests.software_config import heat_config_notify as hcn
+from tests import common
+from tests import heat_config_notify as hcn
 
 
 class HeatConfigNotifyTest(common.RunScriptTest):

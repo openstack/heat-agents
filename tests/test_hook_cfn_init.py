@@ -16,7 +16,7 @@ import os
 
 import fixtures
 
-from tests.software_config import common
+from tests import common
 
 
 class HookCfnInitTest(common.RunScriptTest):
@@ -31,8 +31,7 @@ class HookCfnInitTest(common.RunScriptTest):
         super(HookCfnInitTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-cfn-init/install.d/hook-cfn-init.py')
 
         self.fake_tool_path = self.relative_path(

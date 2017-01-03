@@ -16,7 +16,7 @@ import os
 
 import fixtures
 
-from tests.software_config import common
+from tests import common
 
 
 class HookScriptTest(common.RunScriptTest):
@@ -25,8 +25,7 @@ class HookScriptTest(common.RunScriptTest):
         super(HookScriptTest, self).setUp()
         self.hook_path = self.relative_path(
             __file__,
-            '../..',
-            'hot/software-config/elements',
+            '..',
             'heat-config-script/install.d/hook-script.py')
 
         self.fake_tool_path = self.relative_path(

@@ -16,7 +16,7 @@ import mock
 import re
 import testtools
 
-from tests.software_config import hook_kubelet
+from tests import hook_kubelet
 
 
 class HookKubeletTest(testtools.TestCase):
