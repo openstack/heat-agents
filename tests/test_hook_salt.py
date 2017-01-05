@@ -37,9 +37,10 @@ failure:
 """
 
 slsnotallowed = """
-install_service:
-  pkg.installed:
-  - name: {{ opts['fooval'] }}
+default to accept:
+  iptables.set_policy:
+    - chain: INPUT
+    - policy: REJECT
 """
 
 

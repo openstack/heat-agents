@@ -17,6 +17,8 @@ import os
 import tempfile
 import yaml
 
+import fixtures
+
 from tests import common
 
 log = logging.getLogger('test_hook_json_file')
@@ -31,7 +33,9 @@ class HookJsonFileConfigTest(common.RunScriptTest):
             '..',
             'heat-config-json-file/install.d/hook-json-file.py')
 
-        self.conf = tempfile.NamedTemporaryFile(mode='w', delete=False).name
+        conf_dir = self.useFixture(fixtures.TempDir()).join()
+        self.conf = tempfile.NamedTemporaryFile(
+            mode='w', dir=conf_dir, delete=False).name
         os.unlink(self.conf)
 
         self.env = os.environ.copy()

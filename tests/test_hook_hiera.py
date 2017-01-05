@@ -55,7 +55,9 @@ class HookHieraTest(common.RunScriptTest):
             'heat-config-hiera/install.d/hook-hiera.py')
 
         self.hieradata_dir = self.useFixture(fixtures.TempDir()).join()
-        self.conf = tempfile.NamedTemporaryFile(mode='w', delete=False).name
+        conf_dir = self.useFixture(fixtures.TempDir()).join()
+        self.conf = tempfile.NamedTemporaryFile(
+            dir=conf_dir, mode='w', delete=False).name
         os.unlink(self.conf)
 
         self.env = os.environ.copy()
