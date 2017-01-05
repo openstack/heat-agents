@@ -48,8 +48,7 @@ def main(argv=sys.argv):
     if isinstance(response, list):
         response = response[suffix]
 
-    for k, v in response.get('files', {}).iteritems():
-        open(k, 'w')
+    for k, v in response.get('files', {}).items():
         with open(k, 'w') as f:
             f.write(v)
 

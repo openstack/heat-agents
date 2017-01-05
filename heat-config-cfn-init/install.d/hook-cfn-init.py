@@ -70,8 +70,8 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
         log.info('Completed %s' % CFN_INIT_CMD)
 
     response = {
-        'deploy_stdout': cstdout,
-        'deploy_stderr': cstderr,
+        'deploy_stdout': cstdout.decode('utf-8', 'replace'),
+        'deploy_stderr': cstderr.decode('utf-8', 'replace'),
         'deploy_status_code': subproc.returncode,
     }
 

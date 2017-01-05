@@ -73,7 +73,7 @@ def main(argv=sys.argv):
     labels = collections.OrderedDict()
     labels['deploy_stack_id'] = input_values.get('deploy_stack_id')
     labels['deploy_resource_name'] = input_values.get('deploy_resource_name')
-    (stdout, stderr, deploy_status_code) = paunch.apply(
+    stdout, stderr, deploy_status_code = paunch.apply(
         cid,
         config,
         managed_by='docker-cmd',

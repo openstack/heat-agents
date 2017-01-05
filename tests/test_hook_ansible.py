@@ -165,7 +165,7 @@ class HookAnsibleTest(common.RunScriptTest):
             'deploy_stdout': 'ansible success',
             'deploy_stderr': 'thing happened',
             'deploy_status_code': 0,
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         ansible_playbook = self.working_dir.join('1234_playbook.yaml')
@@ -214,7 +214,7 @@ class HookAnsibleTest(common.RunScriptTest):
             'deploy_stdout': 'ansible success',
             'deploy_stderr': 'thing happened',
             'deploy_status_code': 0,
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         ansible_playbook = self.working_dir.join('1234_playbook.yaml')
@@ -248,7 +248,7 @@ class HookAnsibleTest(common.RunScriptTest):
             'deploy_stdout': 'ansible failed',
             'deploy_stderr': 'bad thing happened',
             'deploy_status_code': 4,
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         ansible_playbook = self.working_dir.join('1234_playbook.yaml')

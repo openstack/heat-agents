@@ -157,7 +157,7 @@ class HeatConfigTest(common.RunScriptTest):
         self.env = os.environ.copy()
 
     def write_config_file(self, data):
-        config_file = tempfile.NamedTemporaryFile()
+        config_file = tempfile.NamedTemporaryFile(mode='w')
         config_file.write(json.dumps(data))
         config_file.flush()
         return config_file

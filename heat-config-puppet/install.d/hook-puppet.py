@@ -92,7 +92,7 @@ def main(argv=sys.argv):
         with os.fdopen(os.open(hiera_data,
                                os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600),
                        'w') as hiera_file:
-            hiera_file.write(json.dumps(hiera).encode('utf8'))
+            hiera_file.write(json.dumps(hiera))
         facts['FACTER_deploy_config_name'] = c['name']
 
     fn = os.path.join(WORKING_DIR, '%s.pp' % c['id'])
@@ -106,7 +106,7 @@ def main(argv=sys.argv):
 
     with os.fdopen(os.open(fn, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o700),
                    'w') as f:
-        f.write(c.get('config', '').encode('utf-8'))
+        f.write(c.get('config', ''))
 
     cmd = [PUPPET_CMD, 'apply', '--color', 'false', '--detailed-exitcodes', fn]
     # This is the default log destination to print out to the console and

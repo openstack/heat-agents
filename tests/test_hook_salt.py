@@ -97,9 +97,9 @@ class HookSaltTest(common.RunScriptTest):
         self.assertIsNone(ret['deploy_stderr'])
         self.assertIsNotNone(ret['deploy_stdout'])
         resp = yaml.safe_load(ret['deploy_stdout'])
-        self.assertTrue(resp.values()[0]['result'])
+        self.assertTrue(list(resp.values())[0]['result'])
         self.assertEqual({'bar': 'foo', 'foo': 'bar'},
-                         resp.values()[0]['changes'])
+                         list(resp.values())[0]['changes'])
 
     def test_hook_salt_failed(self):
 
@@ -111,7 +111,7 @@ class HookSaltTest(common.RunScriptTest):
         self.assertEqual(0, returncode)
         self.assertIsNotNone(stderr)
         self.assertIsNotNone(stdout)
-        jsonout = json.loads(stdout)
+        jsonout = json.loads(stdout.decode('utf-8'))
         self.assertIsNone(jsonout.get("deploy_stdout"),
                           jsonout.get("deploy_stdout"))
         self.assertEqual(2, jsonout.get("deploy_status_code"))
@@ -128,8 +128,8 @@ class HookSaltTest(common.RunScriptTest):
         self.assertEqual(0, returncode, stderr)
         self.assertIsNotNone(stdout)
         self.assertIsNotNone(stderr)
-        ret = json.loads(stdout)
+        ret = json.loads(stdout.decode('utf-8'))
         self.assertIsNone(ret['deploy_stdout'])
         self.assertIsNotNone(ret['deploy_stderr'])
-        resp = yaml.safe_load(ret['deploy_stderr']).values()[0]
+        resp = list(yaml.safe_load(ret['deploy_stderr']).values())[0]
         self.assertFalse(resp['result'])

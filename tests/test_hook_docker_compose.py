@@ -107,7 +107,7 @@ class HookDockerComposeTest(common.RunScriptTest):
             'deploy_stdout': '',
             'deploy_stderr': 'Creating abcdef001_db_1...',
             'deploy_status_code': 0
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         self.assertEqual(
@@ -135,7 +135,7 @@ class HookDockerComposeTest(common.RunScriptTest):
             'deploy_stdout': '',
             'deploy_stderr': 'env_file_not found...',
             'deploy_status_code': 1
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         self.assertEqual(
@@ -163,7 +163,7 @@ class HookDockerComposeTest(common.RunScriptTest):
             'deploy_stdout': '',
             'deploy_stderr': 'Error: image library/xxx:latest not found',
             'deploy_status_code': 1
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         self.assertEqual(

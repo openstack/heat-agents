@@ -84,7 +84,7 @@ class HookScriptTest(common.RunScriptTest):
             'deploy_status_code': 0,
             'first_output': 'output 1',
             'second_output': 'output 2',
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         script = self.working_dir.join('1234')
@@ -116,7 +116,7 @@ class HookScriptTest(common.RunScriptTest):
             'deploy_stdout': 'script failed',
             'deploy_stderr': 'bad thing happened',
             'deploy_status_code': 1,
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = self.json_from_file(self.test_state_path)
         script = self.working_dir.join('1234')

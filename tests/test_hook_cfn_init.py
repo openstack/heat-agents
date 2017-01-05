@@ -64,7 +64,7 @@ class HookCfnInitTest(common.RunScriptTest):
             'deploy_stdout': 'cfn-init success',
             'deploy_stderr': 'thing happened',
             'deploy_status_code': 0
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         # assert last_metadata was written with cfn-init metadata
         self.assertEqual(
@@ -92,7 +92,7 @@ class HookCfnInitTest(common.RunScriptTest):
             'deploy_stdout': '',
             'deploy_stderr': 'bad thing happened',
             'deploy_status_code': 1
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         self.assertEqual(
             {'AWS::CloudFormation::Init': {'foo': 'bar'}},

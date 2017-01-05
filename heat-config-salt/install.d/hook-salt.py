@@ -70,7 +70,7 @@ def main(argv=sys.argv):
 
     fn = os.path.join(WORKING_DIR, state_file)
     with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o700), 'w') as f:
-        f.write(yaml_config.encode('utf-8'))
+        f.write(yaml_config)
 
     caller = salt.cli.caller.Caller.factory(opts)
 

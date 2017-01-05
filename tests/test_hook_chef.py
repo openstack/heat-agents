@@ -13,10 +13,11 @@
 
 import copy
 import imp
+import io
 import json
 import logging
 import mock
-import StringIO
+import six
 import sys
 
 from tests import common
@@ -58,8 +59,12 @@ class HookChefTest(common.RunScriptTest):
             __file__,
             '..',
             'heat-config-chef/install.d/hook-chef.py')
-        sys.stdin = StringIO.StringIO()
-        sys.stdout = StringIO.StringIO()
+        if six.PY2:
+            sys.stdin = io.BytesIO()
+            sys.stdout = io.BytesIO()
+        else:
+            sys.stdin = io.StringIO()
+            sys.stdout = io.StringIO()
 
     def tearDown(self):
         super(HookChefTest, self).tearDown()
@@ -77,7 +82,7 @@ class HookChefTest(common.RunScriptTest):
         data = copy.deepcopy(self.data)
         data['config'] = '["recipe[apache]"]'
         hook_chef = self.get_module()
-        sys.stdin.write(json.dumps(data))
+        json.dump(data, sys.stdin)
         sys.stdin.seek(0)
         mock_subproc = mock.Mock()
         mock_popen.return_value = mock_subproc

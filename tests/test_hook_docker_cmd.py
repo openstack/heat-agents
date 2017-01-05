@@ -172,7 +172,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                              'Creating web...\n'
                              'one.txt\ntwo.txt\nthree.txt',
             'deploy_status_code': 0
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = list(self.json_from_files(self.test_state_path, 9))
         self.assertEqual([
@@ -308,7 +308,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_stdout': '',
             'deploy_stderr': 'Warning: custom exit code',
             'deploy_status_code': 0
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = list(self.json_from_files(self.test_state_path, 5))
         self.assertEqual([
@@ -398,7 +398,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                              'Creating web...\n'
                              'No such file or directory',
             'deploy_status_code': 2
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = list(self.json_from_files(self.test_state_path, 9))
         self.assertEqual([
@@ -552,7 +552,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                              'Creating web...\n'
                              'one.txt\ntwo.txt\nthree.txt',
             'deploy_status_code': 0
-        }, json.loads(stdout))
+        }, json.loads(stdout.decode('utf-8')))
 
         state = list(self.json_from_files(self.test_state_path, 11))
         db_container_name = state[4]['args'][4]
@@ -691,7 +691,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             }])
         })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
-        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False,
+                                         mode='w') as f:
             f.write(json.dumps([self.data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -740,7 +741,8 @@ class HookDockerCmdTest(common.RunScriptTest):
         })
 
         # run again with empty config data
-        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False,
+                                         mode='w') as f:
             f.write(json.dumps([]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -811,7 +813,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             }])
         })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
-        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False,
+                                         mode='w') as f:
             f.write(json.dumps([self.data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -862,7 +865,8 @@ class HookDockerCmdTest(common.RunScriptTest):
         new_data = copy.deepcopy(self.data)
         new_data['config']['web']['image'] = 'yyy'
         new_data['id'] = 'def456'
-        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False,
+                                         mode='w') as f:
             f.write(json.dumps([new_data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -933,7 +937,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             }])
         })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
-        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False,
+                                         mode='w') as f:
             f.write(json.dumps([self.data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name

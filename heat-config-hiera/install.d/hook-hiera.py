@@ -49,7 +49,7 @@ def exit_legacy_hiera_detected():
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         stdout, stderr = subproc.communicate()
-        rs_stdout = stdout.rstrip()
+        rs_stdout = stdout.rstrip().decode('utf-8', 'replace')
         if rs_stdout != 'empty':
             err_msg = ('Legacy hieradata from os-apply-config has been '
                        'detected - %s. Please update all of your interfaces '
@@ -96,7 +96,7 @@ def main(argv=sys.argv):
 
     # write out the datafiles as YAML
     if 'datafiles' in c:
-        for name, data in c['datafiles'].iteritems():
+        for name, data in c['datafiles'].items():
             hiera_data = os.path.join(HIERA_DATADIR, '%s.json' % name)
             with os.fdopen(os.open(hiera_data,
                                    os.O_CREAT | os.O_TRUNC | os.O_WRONLY,

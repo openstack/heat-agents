@@ -20,8 +20,6 @@ import stat
 import subprocess
 import sys
 
-import requests
-
 HOOKS_DIR_PATHS = (
     os.environ.get('HEAT_CONFIG_HOOKS'),
     '/usr/libexec/heat-config/hooks',
@@ -145,7 +143,8 @@ def invoke_hook(c, log):
                                stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    stdout, stderr = subproc.communicate(input=json.dumps(c))
+    stdout, stderr = subproc.communicate(
+        input=json.dumps(c).encode('utf-8', 'replace'))
 
     log.info(stdout)
     log.debug(stderr)
@@ -158,7 +157,7 @@ def invoke_hook(c, log):
 
     try:
         if stdout:
-            signal_data = json.loads(stdout)
+            signal_data = json.loads(stdout.decode('utf-8', 'replace'))
     except ValueError:
         signal_data = {
             'deploy_stdout': stdout,

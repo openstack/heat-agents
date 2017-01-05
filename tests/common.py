@@ -30,6 +30,8 @@ class RunScriptTest(testtools.TestCase):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    env=env)
+        if input_str:
+            input_str = input_str.encode('utf-8')
         stdout, stderr = subproc.communicate(input=input_str)
         return subproc.returncode, stdout, stderr
 

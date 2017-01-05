@@ -11,12 +11,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import cStringIO
+import io
 import json
 import tempfile
 
 import fixtures
 import mock
+import six
 
 from tests import common
 from tests import heat_config_notify as hcn
@@ -76,9 +77,13 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         super(HeatConfigNotifyTest, self).setUp()
         self.deployed_dir = self.useFixture(fixtures.TempDir())
         hcn.init_logging = mock.MagicMock()
+        if six.PY2:
+            self.stdin = io.BytesIO()
+        else:
+            self.stdin = io.StringIO()
 
     def write_config_file(self, data):
-        config_file = tempfile.NamedTemporaryFile()
+        config_file = tempfile.NamedTemporaryFile(mode='w')
         config_file.write(json.dumps(data))
         config_file.flush()
         return config_file
@@ -86,21 +91,23 @@ class HeatConfigNotifyTest(common.RunScriptTest):
     def test_notify_missing_file(self):
 
         signal_data = json.dumps({'foo': 'bar'})
-        stdin = cStringIO.StringIO(signal_data)
+        self.stdin.write(signal_data)
+        self.stdin.seek(0)
 
         with self.write_config_file(self.data_signal_id) as config_file:
             config_file_name = config_file.name
 
         self.assertEqual(
-            1, hcn.main(['heat-config-notify', config_file_name], stdin))
+            1, hcn.main(['heat-config-notify', config_file_name], self.stdin))
 
     def test_notify_missing_file_arg(self):
 
         signal_data = json.dumps({'foo': 'bar'})
-        stdin = cStringIO.StringIO(signal_data)
+        self.stdin.write(signal_data)
+        self.stdin.seek(0)
 
         self.assertEqual(
-            1, hcn.main(['heat-config-notify'], stdin))
+            1, hcn.main(['heat-config-notify'], self.stdin))
 
     def test_notify_signal_id(self):
         requests = mock.MagicMock()
@@ -109,11 +116,13 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         requests.post.return_value = '[200]'
 
         signal_data = json.dumps({'foo': 'bar'})
-        stdin = cStringIO.StringIO(signal_data)
+        self.stdin.write(signal_data)
+        self.stdin.seek(0)
 
         with self.write_config_file(self.data_signal_id) as config_file:
             self.assertEqual(
-                0, hcn.main(['heat-config-notify', config_file.name], stdin))
+                0,
+                hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
         requests.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
@@ -127,11 +136,13 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         requests.post.return_value = '[200]'
 
         signal_data = json.dumps({'foo': 'bar'})
-        stdin = cStringIO.StringIO(signal_data)
+        self.stdin.write(signal_data)
+        self.stdin.seek(0)
 
         with self.write_config_file(self.data_signal_id_put) as config_file:
             self.assertEqual(
-                0, hcn.main(['heat-config-notify', config_file.name], stdin))
+                0,
+                hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
         requests.put.assert_called_once_with(
             'mock://192.0.2.3/foo',
@@ -144,11 +155,10 @@ class HeatConfigNotifyTest(common.RunScriptTest):
 
         requests.post.return_value = '[200]'
 
-        stdin = cStringIO.StringIO()
-
         with self.write_config_file(self.data_signal_id) as config_file:
             self.assertEqual(
-                0, hcn.main(['heat-config-notify', config_file.name], stdin))
+                0,
+                hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
         requests.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
@@ -161,11 +171,15 @@ class HeatConfigNotifyTest(common.RunScriptTest):
 
         requests.post.return_value = '[200]'
 
-        stdin = cStringIO.StringIO('{{{"hi')
+        signal_data = json.dumps({'foo': 'bar'})
+        self.stdin.write(signal_data)
+        self.stdin.write(signal_data[:-3])
+        self.stdin.seek(0)
 
         with self.write_config_file(self.data_signal_id) as config_file:
             self.assertEqual(
-                0, hcn.main(['heat-config-notify', config_file.name], stdin))
+                0,
+                hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
         requests.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
@@ -184,14 +198,16 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         heatclient.Client.return_value = heat
 
         signal_data = json.dumps({'foo': 'bar'})
-        stdin = cStringIO.StringIO(signal_data)
+        self.stdin.write(signal_data)
+        self.stdin.seek(0)
 
         ks.service_catalog.url_for.return_value = 'mock://192.0.2.3/heat'
         heat.resources.signal.return_value = 'all good'
 
         with self.write_config_file(self.data_heat_signal) as config_file:
             self.assertEqual(
-                0, hcn.main(['heat-config-notify', config_file.name], stdin))
+                0,
+                hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
         ksclient.Client.assert_called_once_with(
             auth_url='mock://192.0.2.3/auth',

@@ -46,8 +46,8 @@ def main(argv=sys.argv):
         log.info('Completed apply-config.')
 
     response = {
-        'deploy_stdout': stdout,
-        'deploy_stderr': stderr,
+        'deploy_stdout': stdout.decode('utf-8', 'replace'),
+        'deploy_stderr': stderr.decode('utf-8', 'replace'),
         'deploy_status_code': subproc.returncode,
     }
 

@@ -59,7 +59,7 @@ def main(argv=sys.argv):
     env['heat_outputs_path'] = heat_outputs_path
 
     with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o700), 'w') as f:
-        f.write(c.get('config', '').encode('utf-8'))
+        f.write(c.get('config', ''))
 
     log.debug('Running %s' % fn)
     subproc = subprocess.Popen([fn], stdout=subprocess.PIPE,
@@ -85,8 +85,8 @@ def main(argv=sys.argv):
             pass
 
     response.update({
-        'deploy_stdout': stdout,
-        'deploy_stderr': stderr,
+        'deploy_stdout': stdout.decode('utf-8', 'replace'),
+        'deploy_stderr': stderr.decode('utf-8', 'replace'),
         'deploy_status_code': subproc.returncode,
     })
 

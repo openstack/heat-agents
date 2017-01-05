@@ -70,8 +70,8 @@ def main(argv=sys.argv):
             vars_filename, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as var_file:
         json.dump(variables, var_file)
     # Write the executable, 'config', to file
-    with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
-        f.write(c.get('config', '').encode('utf-8'))
+    with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o600), 'wb') as f:
+        f.write(c.get('config', '').encode('utf-8', 'replace'))
 
     cmd = [
         ANSIBLE_CMD,
@@ -130,8 +130,8 @@ def main(argv=sys.argv):
             pass
 
     response.update({
-        'deploy_stdout': stdout,
-        'deploy_stderr': stderr,
+        'deploy_stdout': stdout.decode('utf-8', 'replace'),
+        'deploy_stderr': stderr.decode('utf-8', 'replace'),
         'deploy_status_code': subproc.returncode,
     })
 
