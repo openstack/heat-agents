@@ -85,14 +85,19 @@ def main(argv=sys.argv):
         config = yaml.safe_load(config)
 
     for container in sorted(config):
-        container_name = '%s__%s' % (c['name'], container)
-        cmd = [
-            DOCKER_CMD,
-            'run',
-            '--detach=true',
-            '--name',
-            container_name.encode('ascii', 'ignore'),
-        ]
+        action = config[container].get('action', 'run')
+
+        if action == 'run':
+            cmd = [
+                DOCKER_CMD,
+                'run',
+                '--name',
+                container
+            ]
+            cmd.append('--detach=%s' % config[container].get('detach', 'true'))
+        elif action == 'exec':
+            cmd = [DOCKER_CMD, 'exec']
+
         image_name = ''
         for key in sorted(config[container]):
             # These ones contain a list of values
@@ -109,8 +114,12 @@ def main(argv=sys.argv):
                 if arg:
                     cmd.append(arg)
 
-        # Image name must come last.
-        cmd.append(image_name)
+        # Image name and command come last.
+        if action == 'run':
+            cmd.append(image_name)
+
+        if 'command' in config[container]:
+            cmd.extend(config[container].get('command'))
 
         log.debug(' '.join(cmd))
         subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,

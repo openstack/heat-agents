@@ -31,6 +31,10 @@ class HookDockerCmdTest(common.RunScriptTest):
                 "name": "x",
                 "image": "xxx"
             },
+            "web-ls": {
+                "action": "exec",
+                "command": ["web", "/bin/ls", "-l"]
+            },
             "db": {
                 "name": "y",
                 "image": "xxx",
@@ -95,18 +99,20 @@ class HookDockerCmdTest(common.RunScriptTest):
         self.assertEqual({
             'deploy_stdout': '',
             'deploy_stderr': 'Creating abcdef001_db_1...\n'
+                             'Creating abcdef001_db_1...\n'
                              'Creating abcdef001_db_1...',
             'deploy_status_code': 0
         }, json.loads(stdout))
 
         state_0 = self.json_from_file(self.test_state_path)
         state_1 = self.json_from_file('%s_1' % self.test_state_path)
+        state_2 = self.json_from_file('%s_2' % self.test_state_path)
         self.assertEqual([
             self.fake_tool_path,
             'run',
-            '--detach=true',
             '--name',
-            'abcdef001__db',
+            'db',
+            '--detach=true',
             '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
             '--env=FOO=BAR',
             '--net=host',
@@ -120,11 +126,18 @@ class HookDockerCmdTest(common.RunScriptTest):
         self.assertEqual([
             self.fake_tool_path,
             'run',
-            '--detach=true',
             '--name',
-            'abcdef001__web',
+            'web',
+            '--detach=true',
             'xxx'
         ], state_1['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state_2['args'])
 
     def test_hook_failed(self):
 
@@ -141,6 +154,7 @@ class HookDockerCmdTest(common.RunScriptTest):
         self.assertEqual({
             'deploy_stdout': '',
             'deploy_stderr': 'Error: image library/xxx:latest not found\n'
+                             'Error: image library/xxx:latest not found\n'
                              'Error: image library/xxx:latest not found',
             'deploy_status_code': 1
         }, json.loads(stdout))
@@ -150,9 +164,9 @@ class HookDockerCmdTest(common.RunScriptTest):
         self.assertEqual([
             self.fake_tool_path,
             'run',
-            '--detach=true',
             '--name',
-            'abcdef001__db',
+            'db',
+            '--detach=true',
             '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
             '--env=FOO=BAR',
             '--net=host',
@@ -166,9 +180,9 @@ class HookDockerCmdTest(common.RunScriptTest):
         self.assertEqual([
             self.fake_tool_path,
             'run',
-            '--detach=true',
             '--name',
-            'abcdef001__web',
+            'web',
+            '--detach=true',
             'xxx'
         ], state_1['args'])
 
@@ -209,13 +223,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'rm',
             '-f',
-            'abcdef001__db',
+            'db',
         ], state_0['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'abcdef001__web',
+            'web',
         ], state_1['args'])
 
     def test_cleanup_changed(self):
@@ -256,11 +270,11 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'rm',
             '-f',
-            'abcdef001__db',
+            'db',
         ], state_0['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'abcdef001__web',
+            'web',
         ], state_1['args'])
