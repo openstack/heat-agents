@@ -24,7 +24,7 @@ with the following:
 
   git clone https://git.openstack.org/openstack/diskimage-builder.git
   git clone https://git.openstack.org/openstack/tripleo-image-elements.git
-  git clone https://git.openstack.org/openstack/heat-templates.git
+  git clone https://git.openstack.org/openstack/heat-agents.git
   git clone https://git.openstack.org/openstack/dib-utils.git
   export PATH="${PWD}/dib-utils/bin:$PATH"
   export ELEMENTS_PATH=tripleo-image-elements/elements:heat-agents/
