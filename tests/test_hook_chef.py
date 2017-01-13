@@ -91,7 +91,8 @@ class HookChefTest(common.RunScriptTest):
                     'fooval': {u'bar': u'baz'},
                     'run_list': [u'recipe[apache]']
                 }
-                exp_node = json.dumps(exp_node, indent=4)
+                exp_node = json.dumps(exp_node, indent=4,
+                                      separators=(',', ': '))
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"
                            "local_mode true\n"
@@ -188,7 +189,8 @@ class HookChefTest(common.RunScriptTest):
                     'fooval': {u'bar': u'baz'},
                     'run_list': [u'recipe[apache]']
                 }
-                exp_node = json.dumps(exp_node, indent=4)
+                exp_node = json.dumps(exp_node, indent=4,
+                                      separators=(',', ': '))
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"
                            "local_mode true\n"

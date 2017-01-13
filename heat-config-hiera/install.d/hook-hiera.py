@@ -69,7 +69,8 @@ def main(argv=sys.argv):
                                    os.O_CREAT | os.O_TRUNC | os.O_WRONLY,
                                    0o600),
                            'w') as hiera_data_file:
-                json.dump(data, hiera_data_file, indent=4, sort_keys=True)
+                json.dump(data, hiera_data_file, indent=4, sort_keys=True,
+                          separators=(',', ': '))
 
     response = {
         'deploy_stdout': '',

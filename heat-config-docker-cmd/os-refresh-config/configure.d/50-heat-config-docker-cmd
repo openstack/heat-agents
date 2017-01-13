@@ -138,7 +138,7 @@ def write_project(c):
     with os.fdopen(os.open(
             proj_file, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600),
             'w') as f:
-        json.dump(proj_data, f, indent=2)
+        json.dump(proj_data, f, indent=2, separators=(',', ': '))
 
 
 if __name__ == '__main__':

@@ -128,7 +128,7 @@ def main(argv=sys.argv):
     node_file = os.path.join(node_path, "%s.json" % fqdn)
     with os.fdopen(os.open(node_file, os.O_CREAT | os.O_WRONLY, 0o600),
                    'w') as f:
-        f.write(json.dumps(node_config, indent=4))
+        f.write(json.dumps(node_config, indent=4, separators=(',', ': ')))
     client_config += "\nnode_path '%s'" % node_path
 
     # write out the completed client config

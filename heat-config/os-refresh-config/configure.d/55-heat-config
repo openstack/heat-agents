@@ -138,7 +138,7 @@ def invoke_hook(c, log):
     # subsequent hook success
     with os.fdopen(os.open(
             deployed_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
-        json.dump(c, f, indent=2)
+        json.dump(c, f, indent=2, separators=(',', ': '))
 
     log.debug('Running %s < %s' % (hook_path, deployed_path))
     subproc = subprocess.Popen([hook_path],
@@ -170,7 +170,7 @@ def invoke_hook(c, log):
     # write out notify data for debugging
     with os.fdopen(os.open(
             signal_data_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
-        json.dump(signal_data, f, indent=2)
+        json.dump(signal_data, f, indent=2, separators=(',', ': '))
 
     log.debug('Running %s %s < %s' % (
         HEAT_CONFIG_NOTIFY, deployed_path, signal_data_path))
