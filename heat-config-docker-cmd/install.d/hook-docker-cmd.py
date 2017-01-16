@@ -42,7 +42,7 @@ def docker_arg_map(key, value):
         'image': value,
         'net': "--net=%s" % value,
         'pid': "--pid=%s" % value,
-        'privileged': "--privileged=%s" % 'true' if value else 'false',
+        'privileged': "--privileged=%s" % value.lower(),
         'restart': "--restart=%s" % value,
         'user': "--user=%s" % value,
         'volumes': "--volume=%s" % value,
