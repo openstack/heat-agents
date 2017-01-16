@@ -27,17 +27,20 @@ class HookDockerCmdTest(common.RunScriptTest):
         "name": "abcdef001",
         "group": "docker-cmd",
         "config": {
-            "web": {
+            "db": {
                 "name": "x",
                 "image": "xxx",
-                "privileged": False
+                "privileged": False,
+                "start_order": 0
             },
             "web-ls": {
                 "action": "exec",
+                "start_order": 2,
                 "command": ["web", "/bin/ls", "-l"]
             },
-            "db": {
+            "web": {
                 "name": "y",
+                "start_order": 1,
                 "image": "xxx",
                 "net": "host",
                 "restart": "always",
@@ -114,14 +117,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'db',
             '--detach=true',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
+            '--privileged=false',
             'xxx'
         ], state_0['args'])
         self.assertEqual([
@@ -130,7 +126,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'web',
             '--detach=true',
-            '--privileged=false',
+            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            '--env=FOO=BAR',
+            '--net=host',
+            '--privileged=true',
+            '--restart=always',
+            '--user=root',
+            '--volume=/run:/run',
+            '--volume=db:/var/lib/db',
             'xxx'
         ], state_1['args'])
         self.assertEqual([
@@ -169,14 +172,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'db',
             '--detach=true',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
+            '--privileged=false',
             'xxx'
         ], state_0['args'])
         self.assertEqual([
@@ -185,7 +181,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'web',
             '--detach=true',
-            '--privileged=false',
+            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            '--env=FOO=BAR',
+            '--net=host',
+            '--privileged=true',
+            '--restart=always',
+            '--user=root',
+            '--volume=/run:/run',
+            '--volume=db:/var/lib/db',
             'xxx'
         ], state_1['args'])
 

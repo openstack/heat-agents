@@ -37,7 +37,6 @@ def build_response(deploy_stdout, deploy_stderr, deploy_status_code):
 def docker_arg_map(key, value):
     value = str(value).encode('ascii', 'ignore')
     return {
-        'container_step_config': None,
         'environment': "--env=%s" % value,
         'image': value,
         'net': "--net=%s" % value,
@@ -84,7 +83,9 @@ def main(argv=sys.argv):
     if not isinstance(config, dict):
         config = yaml.safe_load(config)
 
-    for container in sorted(config):
+    key_fltr = lambda k: config[k].get('start_order', 0)
+    for container in sorted(config, key=key_fltr):
+        log.debug("Running container: %s" % container)
         action = config[container].get('action', 'run')
 
         if action == 'run':
@@ -94,7 +95,8 @@ def main(argv=sys.argv):
                 '--name',
                 container
             ]
-            cmd.append('--detach=%s' % config[container].get('detach', 'true'))
+            if config[container].get('detach', True):
+                cmd.append('--detach=true')
         elif action == 'exec':
             cmd = [DOCKER_CMD, 'exec']
 
