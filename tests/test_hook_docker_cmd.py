@@ -29,7 +29,8 @@ class HookDockerCmdTest(common.RunScriptTest):
         "config": {
             "web": {
                 "name": "x",
-                "image": "xxx"
+                "image": "xxx",
+                "privileged": False
             },
             "web-ls": {
                 "action": "exec",
@@ -129,6 +130,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'web',
             '--detach=true',
+            '--privileged=false',
             'xxx'
         ], state_1['args'])
         self.assertEqual([
@@ -183,6 +185,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--name',
             'web',
             '--detach=true',
+            '--privileged=false',
             'xxx'
         ], state_1['args'])
 
