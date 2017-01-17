@@ -86,6 +86,7 @@ def main(argv=sys.argv):
 
     for container in sorted(config):
         action = config[container].get('action', 'run')
+        exit_codes = config[container].get('exit_codes', [0])
 
         if action == 'run':
             cmd = [
@@ -137,8 +138,11 @@ def main(argv=sys.argv):
         else:
             log.debug('Completed %s' % cmd)
 
-        if subproc.returncode != 0:
+        if subproc.returncode not in exit_codes:
+            log.error("Error running %s. [%s]\n" % (cmd, subproc.returncode))
             deploy_status_code = subproc.returncode
+        else:
+            log.debug('Completed %s' % cmd)
 
     json.dump(build_response(
         '\n'.join(stdout), '\n'.join(stderr), deploy_status_code), sys.stdout)

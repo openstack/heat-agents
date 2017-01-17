@@ -56,6 +56,18 @@ class HookDockerCmdTest(common.RunScriptTest):
         }
     }
 
+    data_exit_code = {
+        "name": "abcdef001",
+        "group": "docker-cmd",
+        "config": {
+            "web-ls": {
+                "action": "exec",
+                "command": ["web", "/bin/ls", "-l"],
+                "exit_codes": [0, 1]
+            }
+        }
+    }
+
     def setUp(self):
         super(HookDockerCmdTest, self).setUp()
         self.hook_path = self.relative_path(
@@ -140,6 +152,33 @@ class HookDockerCmdTest(common.RunScriptTest):
             '/bin/ls',
             '-l'
         ], state_2['args'])
+
+    def test_hook_exit_codes(self):
+
+        self.env.update({
+            'TEST_RESPONSE': json.dumps({
+                'stdout': '',
+                'stderr': 'Warning: custom exit code',
+                'returncode': 1
+            })
+        })
+        returncode, stdout, stderr = self.run_cmd(
+            [self.hook_path], self.env, json.dumps(self.data_exit_code))
+
+        self.assertEqual({
+            'deploy_stdout': '',
+            'deploy_stderr': 'Warning: custom exit code',
+            'deploy_status_code': 0
+        }, json.loads(stdout))
+
+        state_0 = self.json_from_file(self.test_state_path)
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state_0['args'])
 
     def test_hook_failed(self):
 
