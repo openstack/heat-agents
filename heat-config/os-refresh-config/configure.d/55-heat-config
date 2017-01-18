@@ -130,7 +130,7 @@ def invoke_hook(c, log):
     hook_path = find_hook_path(c['group'])
 
     if not hook_path:
-        log.warn('Skipping group %s with no hook script %s' % (
+        log.error('Skipping group %s with no hook script %s' % (
             c['group'], hook_path))
         return
 
