@@ -38,7 +38,8 @@ def main(argv=sys.argv):
         prepare_dir(os.path.dirname(fname))
         data = c.get(fname)
         with open(fname, 'w') as json_data_file:
-            json.dump(data, json_data_file, indent=4, sort_keys=True)
+            json.dump(data, json_data_file, indent=4, sort_keys=True,
+                      separators=(',', ': '))
 
     response = {
         'deploy_stdout': '',
