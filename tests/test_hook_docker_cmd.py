@@ -229,7 +229,8 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state_1['args'])
 
     def test_cleanup_deleted(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        conf_dir = self.useFixture(fixtures.TempDir()).join()
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([self.data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -245,7 +246,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                         matchers.Not(matchers.FileExists()))
 
         # run again with empty config data
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -275,7 +276,8 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state_1['args'])
 
     def test_cleanup_changed(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        conf_dir = self.useFixture(fixtures.TempDir()).join()
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([self.data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
@@ -293,7 +295,7 @@ class HookDockerCmdTest(common.RunScriptTest):
         # run again with changed config data
         new_data = copy.deepcopy(self.data)
         new_data['config']['web']['image'] = 'yyy'
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([new_data]))
             f.flush()
             self.env['HEAT_SHELL_CONFIG'] = f.name
