@@ -51,6 +51,7 @@ def main(argv=sys.argv):
         variables[input['name']] = input.get('value', '')
 
     tags = c['options'].get('tags')
+    skip_tags = c['options'].get('skip_tags')
     modulepath = c['options'].get('modulepath')
 
     fn = os.path.join(WORKING_DIR, '%s_playbook.yaml' % c['id'])
@@ -81,6 +82,9 @@ def main(argv=sys.argv):
     if tags:
         cmd.insert(3, '--tags')
         cmd.insert(4, tags)
+    if skip_tags:
+        cmd.insert(3, '--skip-tags')
+        cmd.insert(4, skip_tags)
     if modulepath:
         cmd.insert(3, '--module-path')
         cmd.insert(4, modulepath)

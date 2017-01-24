@@ -58,6 +58,22 @@ class HookAnsibleTest(common.RunScriptTest):
                     'tags':       'abc,def'},
     })
 
+    data_skip_tags = data.copy()
+    data_skip_tags.update({'options': {'skip_tags': 'abc,def'}})
+
+    data_skip_tags_empty = data.copy()
+    data_skip_tags_empty.update({'options': {'skip_tags': ''}})
+
+    data_tags_skip_tags = data.copy()
+    data_tags_skip_tags.update({'options': {'tags': 'abc,def',
+                                            'skip_tags': 'abc'}})
+
+    data_skip_tags_modulepath = data.copy()
+    data_skip_tags_modulepath.update({
+        'options': {'modulepath': '/opt/ansible:/usr/share/ansible',
+                    'skip_tags':  'abc,def'},
+    })
+
     def setUp(self):
         super(HookAnsibleTest, self).setUp()
         self.hook_path = self.relative_path(
@@ -88,6 +104,18 @@ class HookAnsibleTest(common.RunScriptTest):
     def test_hook_tags(self):
         self._hook_run(data=self.data_tags, options=['--tags', 'abc,def'])
 
+    def test_hook_skip_tags(self):
+        self._hook_run(data=self.data_skip_tags,
+                       options=['--skip-tags', 'abc,def'])
+
+    def test_hook_skip_tags_empty(self):
+        self._hook_run(data=self.data_skip_tags_empty)
+
+    def test_hook_tags_skip_tags(self):
+        self._hook_run(data=self.data_tags_skip_tags,
+                       options=['--skip-tags', 'abc',
+                                '--tags', 'abc,def'])
+
     def test_hook_modulepath(self):
         self._hook_run(data=self.data_modulepath,
                        options=['--module-path',
@@ -98,6 +126,12 @@ class HookAnsibleTest(common.RunScriptTest):
                        options=['--module-path',
                                 '/opt/ansible:/usr/share/ansible',
                                 '--tags', 'abc,def'])
+
+    def test_hook_skip_tags_modulepath(self):
+        self._hook_run(data=self.data_skip_tags_modulepath,
+                       options=['--module-path',
+                                '/opt/ansible:/usr/share/ansible',
+                                '--skip-tags', 'abc,def'])
 
     def _hook_run(self, data=None, options=None):
 
