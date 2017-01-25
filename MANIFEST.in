@@ -1,0 +1,13 @@
+recursive-include heat-config *
+recursive-include heat-config-ansible *
+recursive-include heat-config-apply-config *
+recursive-include heat-config-cfn-init *
+recursive-include heat-config-chef *
+recursive-include heat-config-docker-cmd *
+recursive-include heat-config-docker-compose *
+recursive-include heat-config-hiera *
+recursive-include heat-config-json-file *
+recursive-include heat-config-kubelet *
+recursive-include heat-config-puppet *
+recursive-include heat-config-salt *
+recursive-include heat-config-script *
