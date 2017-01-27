@@ -15,12 +15,18 @@
 import json
 import logging
 import os
+import subprocess
 import sys
 
 
 HIERA_DATADIR = os.environ.get('HEAT_PUPPET_HIERA_DATADIR',
                                '/etc/puppet/hieradata')
 HIERA_CONFIG = os.environ.get('HEAT_HIERA_CONFIG', '/etc/puppet/hiera.yaml')
+HIERA_ELEMENT_CHECK_CMD = os.environ.get('HEAT_HIERA_ELEMENT_CHECK_CMD',
+                                         'os-apply-config '
+                                         '--key hiera.datafiles '
+                                         '--type raw --key-default empty')
+
 
 HIERA_CONFIG_BASE = """
 ---
@@ -37,6 +43,31 @@ def prepare_dir(path):
         os.makedirs(path, 0o700)
 
 
+def exit_legacy_hiera_detected():
+    try:
+        subproc = subprocess.Popen(HIERA_ELEMENT_CHECK_CMD.split(" "),
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        stdout, stderr = subproc.communicate()
+        if stdout.rstrip() != 'empty':
+            err_msg = ('Legacy hieradata from os-apply-config has been '
+                       'detected. Please update all of your interfaces '
+                       'to use the new heat-agents hiera hook before '
+                       'proceeding')
+            response = {
+                'deploy_stdout': stdout,
+                'deploy_stderr': err_msg,
+                'deploy_status_code': 1,
+            }
+
+            json.dump(response, sys.stdout)
+            sys.exit(0)
+
+    except OSError:
+        # os-apply-config is not installed? Assume there is no legacy data.
+        pass
+
+
 def main(argv=sys.argv):
     log = logging.getLogger('heat-config')
     handler = logging.StreamHandler(sys.stderr)
@@ -47,6 +78,7 @@ def main(argv=sys.argv):
     log.setLevel('DEBUG')
 
     c = json.load(sys.stdin)['config']
+    exit_legacy_hiera_detected()
 
     prepare_dir(HIERA_DATADIR)
 
