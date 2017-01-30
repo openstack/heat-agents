@@ -49,6 +49,16 @@ def docker_arg_map(key, value):
     }.get(key, None)
 
 
+def execute(cmd):
+    log.debug(' '.join(cmd))
+    subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    cmd_stdout, cmd_stderr = subproc.communicate()
+    log.debug(cmd_stdout)
+    log.debug(cmd_stderr)
+    return cmd_stdout, cmd_stderr, subproc.returncode
+
+
 def main(argv=sys.argv):
     global log
     log = logging.getLogger('heat-config')
@@ -124,25 +134,15 @@ def main(argv=sys.argv):
         if 'command' in config[container]:
             cmd.extend(config[container].get('command'))
 
-        log.debug(' '.join(cmd))
-        subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        cmd_stdout, cmd_stderr = subproc.communicate()
-        log.debug(cmd_stdout)
-        log.debug(cmd_stderr)
+        (cmd_stdout, cmd_stderr, returncode) = execute(cmd)
         if cmd_stdout:
             stdout.append(cmd_stdout)
         if cmd_stderr:
             stderr.append(cmd_stderr)
 
-        if subproc.returncode:
-            log.error("Error running %s. [%s]\n" % (cmd, subproc.returncode))
-        else:
-            log.debug('Completed %s' % cmd)
-
-        if subproc.returncode not in exit_codes:
-            log.error("Error running %s. [%s]\n" % (cmd, subproc.returncode))
-            deploy_status_code = subproc.returncode
+        if returncode not in exit_codes:
+            log.error("Error running %s. [%s]\n" % (cmd, returncode))
+            deploy_status_code = returncode
         else:
             log.debug('Completed %s' % cmd)
 
