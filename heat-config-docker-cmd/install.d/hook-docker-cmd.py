@@ -59,6 +59,21 @@ def execute(cmd):
     return cmd_stdout, cmd_stderr, subproc.returncode
 
 
+def label_arguments(cmd, container, cid, iv):
+    cmd.extend([
+        '--label',
+        'deploy_stack_id=%s' % iv.get('deploy_stack_id'),
+        '--label',
+        'deploy_resource_name=%s' % iv.get('deploy_resource_name'),
+        '--label',
+        'config_id=%s' % cid,
+        '--label',
+        'container_name=%s' % container,
+        '--label',
+        'managed_by=docker-cmd'
+    ])
+
+
 def main(argv=sys.argv):
     global log
     log = logging.getLogger('heat-config')
@@ -106,6 +121,7 @@ def main(argv=sys.argv):
                 '--name',
                 container
             ]
+            label_arguments(cmd, container, c.get('id'), input_values)
             if config[container].get('detach', True):
                 cmd.append('--detach=true')
         elif action == 'exec':
