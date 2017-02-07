@@ -36,3 +36,22 @@ class RunScriptTest(testtools.TestCase):
     def json_from_file(self, path):
         with open(path) as f:
             return json.load(f)
+
+    def json_from_files(self, path, count, delete_after=True):
+        for i in range(count + 1):
+            if i == 0:
+                filename = path
+            else:
+                filename = '%s_%d' % (path, i)
+
+            # check there are not more files than the exact number requested
+            if i == count:
+                self.assertFalse(
+                    os.path.isfile(filename),
+                    'More than %d invocations' % count
+                )
+            else:
+                with open(filename) as f:
+                    yield json.load(f)
+                if delete_after:
+                    os.remove(filename)

@@ -44,6 +44,10 @@ def main(argv=sys.argv):
         return
 
     response = json.loads(os.environ.get('TEST_RESPONSE'))
+    # if the response is a list, assume multiple invocations
+    if isinstance(response, list):
+        response = response[suffix]
+
     for k, v in response.get('files', {}).iteritems():
         open(k, 'w')
         with open(k, 'w') as f:

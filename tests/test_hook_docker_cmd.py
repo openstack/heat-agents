@@ -17,7 +17,6 @@ import os
 import tempfile
 
 import fixtures
-from testtools import matchers
 
 from tests import common
 
@@ -102,7 +101,6 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.env = os.environ.copy()
         self.env.update({
-            'HEAT_DOCKER_CMD_WORKING': self.working_dir.join(),
             'HEAT_DOCKER_CMD': self.fake_tool_path,
             'TEST_STATE_PATH': self.test_state_path,
         })
@@ -110,10 +108,16 @@ class HookDockerCmdTest(common.RunScriptTest):
     def test_hook(self):
 
         self.env.update({
-            'TEST_RESPONSE': json.dumps({
+            'TEST_RESPONSE': json.dumps([{
                 'stdout': '',
-                'stderr': 'Creating abcdef001_db_1...'
-            })
+                'stderr': 'Creating db...'
+            }, {
+                'stdout': '',
+                'stderr': 'Creating web...'
+            }, {
+                'stdout': '',
+                'stderr': 'one.txt\ntwo.txt\nthree.txt'
+            }])
         })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data))
@@ -122,15 +126,13 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.assertEqual({
             'deploy_stdout': '',
-            'deploy_stderr': 'Creating abcdef001_db_1...\n'
-                             'Creating abcdef001_db_1...\n'
-                             'Creating abcdef001_db_1...',
+            'deploy_stderr': 'Creating db...\n'
+                             'Creating web...\n'
+                             'one.txt\ntwo.txt\nthree.txt',
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state_0 = self.json_from_file(self.test_state_path)
-        state_1 = self.json_from_file('%s_1' % self.test_state_path)
-        state_2 = self.json_from_file('%s_2' % self.test_state_path)
+        state = list(self.json_from_files(self.test_state_path, 3))
         self.assertEqual([
             self.fake_tool_path,
             'run',
@@ -149,7 +151,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--detach=true',
             '--privileged=false',
             'xxx'
-        ], state_0['args'])
+        ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'run',
@@ -175,14 +177,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
             'xxx'
-        ], state_1['args'])
+        ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state_2['args'])
+        ], state[2]['args'])
 
     def test_hook_exit_codes(self):
 
@@ -202,37 +204,42 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state_0 = self.json_from_file(self.test_state_path)
+        state = list(self.json_from_files(self.test_state_path, 1))
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state_0['args'])
+        ], state[0]['args'])
 
     def test_hook_failed(self):
 
         self.env.update({
-            'TEST_RESPONSE': json.dumps({
+            'TEST_RESPONSE': json.dumps([{
                 'stdout': '',
-                'stderr': 'Error: image library/xxx:latest not found',
-                'returncode': 1
-            })
+                'stderr': 'Creating db...'
+            }, {
+                'stdout': '',
+                'stderr': 'Creating web...'
+            }, {
+                'stdout': '',
+                'stderr': 'No such file or directory',
+                'returncode': 2
+            }])
         })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data))
 
         self.assertEqual({
             'deploy_stdout': '',
-            'deploy_stderr': 'Error: image library/xxx:latest not found\n'
-                             'Error: image library/xxx:latest not found\n'
-                             'Error: image library/xxx:latest not found',
-            'deploy_status_code': 1
+            'deploy_stderr': 'Creating db...\n'
+                             'Creating web...\n'
+                             'No such file or directory',
+            'deploy_status_code': 2
         }, json.loads(stdout))
 
-        state_0 = self.json_from_file(self.test_state_path)
-        state_1 = self.json_from_file('%s_1' % self.test_state_path)
+        state = list(self.json_from_files(self.test_state_path, 3))
         self.assertEqual([
             self.fake_tool_path,
             'run',
@@ -251,7 +258,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--detach=true',
             '--privileged=false',
             'xxx'
-        ], state_0['args'])
+        ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'run',
@@ -277,9 +284,22 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
             'xxx'
-        ], state_1['args'])
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state[2]['args'])
 
     def test_cleanup_deleted(self):
+        self.env.update({
+            'TEST_RESPONSE': json.dumps({
+                # first run, no running containers
+                'stdout': '\n'
+            })
+        })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
         with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([self.data]))
@@ -289,12 +309,33 @@ class HookDockerCmdTest(common.RunScriptTest):
             returncode, stdout, stderr = self.run_cmd(
                 [self.cleanup_path], self.env)
 
-        # on the first run, abcdef001.json is written out, no docker calls made
-        configs_path = os.path.join(self.env['HEAT_DOCKER_CMD_WORKING'],
-                                    'abcdef001.json')
-        self.assertThat(configs_path, matchers.FileExists())
-        self.assertThat(self.test_state_path,
-                        matchers.Not(matchers.FileExists()))
+        # on the first run, no docker rm calls made
+        state = list(self.json_from_files(self.test_state_path, 1))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Label "config_id"}}'
+        ], state[0]['args'])
+
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                # list config_id labels, 3 containers same config
+                'stdout': 'abc123\nabc123\nabc123\n'
+            }, {
+                # list containers with config_id
+                'stdout': '111\n222\n333\n'
+            }, {
+                'stdout': '111 deleted'
+            }, {
+                'stdout': '222 deleted'
+            }, {
+                'stdout': '333 deleted'
+            }])
+        })
 
         # run again with empty config data
         with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
@@ -305,28 +346,54 @@ class HookDockerCmdTest(common.RunScriptTest):
             returncode, stdout, stderr = self.run_cmd(
                 [self.cleanup_path], self.env)
 
-        # on the second run, abcdef001.json is deleted, docker rm is run on
-        # both containers
-        configs_path = os.path.join(self.env['HEAT_DOCKER_CMD_WORKING'],
-                                    'abcdef001.json')
-        self.assertThat(configs_path,
-                        matchers.Not(matchers.FileExists()))
-        state_0 = self.json_from_file(self.test_state_path)
-        state_1 = self.json_from_file('%s_1' % self.test_state_path)
+        # on the second run, abc123 is deleted,
+        # docker rm is run on all containers
+        state = list(self.json_from_files(self.test_state_path, 5))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Label "config_id"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-q',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123'
+        ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'db',
-        ], state_0['args'])
+            '111',
+        ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'web',
-        ], state_1['args'])
+            '222',
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'rm',
+            '-f',
+            '333',
+        ], state[4]['args'])
 
     def test_cleanup_changed(self):
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                # list config_id labels, 3 containers same config
+                'stdout': 'abc123\nabc123\nabc123\n'
+            }])
+        })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
         with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([self.data]))
@@ -336,16 +403,37 @@ class HookDockerCmdTest(common.RunScriptTest):
             returncode, stdout, stderr = self.run_cmd(
                 [self.cleanup_path], self.env)
 
-        # on the first run, abcdef001.json is written out, no docker calls made
-        configs_path = os.path.join(self.env['HEAT_DOCKER_CMD_WORKING'],
-                                    'abcdef001.json')
-        self.assertThat(configs_path, matchers.FileExists())
-        self.assertThat(self.test_state_path,
-                        matchers.Not(matchers.FileExists()))
+        # on the first run, no docker rm calls made
+        state = list(self.json_from_files(self.test_state_path, 1))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Label "config_id"}}'
+        ], state[0]['args'])
 
         # run again with changed config data
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                # list config_id labels, 3 containers same config
+                'stdout': 'abc123\nabc123\nabc123\n'
+            }, {
+                # list containers with config_id
+                'stdout': '111\n222\n333\n'
+            }, {
+                'stdout': '111 deleted'
+            }, {
+                'stdout': '222 deleted'
+            }, {
+                'stdout': '333 deleted'
+            }])
+        })
         new_data = copy.deepcopy(self.data)
         new_data['config']['web']['image'] = 'yyy'
+        new_data['id'] = 'def456'
         with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
             f.write(json.dumps([new_data]))
             f.flush()
@@ -354,22 +442,43 @@ class HookDockerCmdTest(common.RunScriptTest):
             returncode, stdout, stderr = self.run_cmd(
                 [self.cleanup_path], self.env)
 
-        # on the second run, abcdef001.json is written with the new data,
-        # docker rm is run on both containers
-        configs_path = os.path.join(self.env['HEAT_DOCKER_CMD_WORKING'],
-                                    'abcdef001.json')
-        self.assertThat(configs_path, matchers.FileExists())
-        state_0 = self.json_from_file(self.test_state_path)
-        state_1 = self.json_from_file('%s_1' % self.test_state_path)
+        # on the second run, abc123 is deleted,
+        # docker rm is run on all containers
+        state = list(self.json_from_files(self.test_state_path, 5))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Label "config_id"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-q',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123'
+        ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'db',
-        ], state_0['args'])
+            '111',
+        ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'rm',
             '-f',
-            'web',
-        ], state_1['args'])
+            '222',
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'rm',
+            '-f',
+            '333',
+        ], state[4]['args'])

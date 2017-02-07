@@ -24,10 +24,6 @@ import yaml
 CONF_FILE = os.environ.get('HEAT_SHELL_CONFIG',
                            '/var/run/heat-config/heat-config')
 
-WORKING_DIR = os.environ.get(
-    'HEAT_DOCKER_CMD_WORKING',
-    '/var/lib/heat-config/heat-config-docker-cmd')
-
 DOCKER_CMD = os.environ.get('HEAT_DOCKER_CMD', 'docker')
 
 
@@ -48,9 +44,6 @@ def main(argv=sys.argv):
         log.warning('No config file %s' % CONF_FILE)
         return 1
 
-    if not os.path.isdir(WORKING_DIR):
-        os.makedirs(WORKING_DIR, 0o700)
-
     try:
         configs = json.load(open(CONF_FILE))
     except ValueError as e:
@@ -59,10 +52,7 @@ def main(argv=sys.argv):
 
     cmd_configs = list(build_configs(configs))
     try:
-        delete_missing_projects(cmd_configs)
-        for c in cmd_configs:
-            delete_changed_project(c)
-            write_project(c)
+        delete_missing_configs(cmd_configs)
     except Exception as e:
         log.exception(e)
 
@@ -77,68 +67,55 @@ def build_configs(configs):
         yield c
 
 
-def current_projects():
-    for proj_file in os.listdir(WORKING_DIR):
-        if proj_file.endswith('.json'):
-            proj = proj_file[:-5]
-            yield proj
+def delete_missing_configs(configs):
+    config_ids = [c['id'] for c in configs]
+    for conf_id in current_config_ids():
+        if conf_id not in config_ids:
+            log.debug('%s no longer exists, deleting containers' % conf_id)
+            remove_containers(conf_id)
 
 
-def remove_project(proj):
-    proj_file = os.path.join(WORKING_DIR, '%s.json' % proj)
-    with open(proj_file, 'r') as f:
-        proj_data = json.load(f)
-        for name in extract_container_names(proj, proj_data):
-            remove_container(name)
-    os.remove(proj_file)
-
-
-def remove_container(name):
-    cmd = [DOCKER_CMD, 'rm', '-f', name]
+def execute(cmd):
     log.debug(' '.join(cmd))
     subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    stdout, stderr = subproc.communicate()
-    log.info(stdout)
-    log.debug(stderr)
+    cmd_stdout, cmd_stderr = subproc.communicate()
+    log.debug(cmd_stdout)
+    log.debug(cmd_stderr)
+    return cmd_stdout, cmd_stderr, subproc.returncode
 
 
-def delete_missing_projects(configs):
-    config_names = [c['name'] for c in configs]
-    for proj in current_projects():
-        if proj not in config_names:
-            log.debug('%s no longer exists, deleting containers' % proj)
-            remove_project(proj)
+def current_config_ids():
+    # List all config_id labels for containers managed by docker-cmd
+    cmd = [
+        DOCKER_CMD, 'ps', '-a',
+        '--filter', 'label=managed_by=docker-cmd',
+        '--format', '{{.Label "config_id"}}'
+    ]
+    cmd_stdout, cmd_stderr, returncode = execute(cmd)
+    if returncode != 0:
+        return set()
+    return set(cmd_stdout.split())
 
 
-def extract_container_names(proj, proj_data):
-        # For now, assume a docker-compose v1 format where the
-        # root keys are service names
-        for name in sorted(proj_data):
-            yield '%s' % (name)
+def remove_containers(conf_id):
+    cmd = [
+        DOCKER_CMD, 'ps', '-q', '-a',
+        '--filter', 'label=managed_by=docker-cmd',
+        '--filter', 'label=config_id=%s' % conf_id
+    ]
+    cmd_stdout, cmd_stderr, returncode = execute(cmd)
+    if returncode == 0:
+        for container in cmd_stdout.split():
+            remove_container(container)
 
 
-def delete_changed_project(c):
-    proj = c['name']
-    proj_file = os.path.join(WORKING_DIR, '%s.json' % proj)
-    proj_data = c.get('config', {})
-    if os.path.isfile(proj_file):
-        with open(proj_file, 'r') as f:
-            prev_proj_data = json.load(f)
-            if proj_data != prev_proj_data:
-                log.debug('%s has changed, deleting containers' % proj)
-                remove_project(proj)
-
-
-def write_project(c):
-    proj = c['name']
-    proj_file = os.path.join(WORKING_DIR, '%s.json' % proj)
-    proj_data = c.get('config', {})
-
-    with os.fdopen(os.open(
-            proj_file, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600),
-            'w') as f:
-        json.dump(proj_data, f, indent=2, separators=(',', ': '))
+def remove_container(container):
+    cmd = [DOCKER_CMD, 'rm', '-f', container]
+    cmd_stdout, cmd_stderr, returncode = execute(cmd)
+    if returncode != 0:
+        log.error('Error removing container: %s' % container)
+        log.error(cmd_stderr)
 
 
 if __name__ == '__main__':
