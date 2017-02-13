@@ -514,10 +514,13 @@ class HookDockerCmdTest(common.RunScriptTest):
 
     def test_cleanup_deleted(self):
         self.env.update({
-            'TEST_RESPONSE': json.dumps({
+            'TEST_RESPONSE': json.dumps([{
                 # first run, no running containers
                 'stdout': '\n'
-            })
+            }, {
+                # list name and container_name label for all containers
+                'stdout': '\n'
+            }])
         })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
         with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
@@ -529,7 +532,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                 [self.cleanup_path], self.env)
 
         # on the first run, no docker rm calls made
-        state = list(self.json_from_files(self.test_state_path, 1))
+        state = list(self.json_from_files(self.test_state_path, 2))
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -539,6 +542,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--format',
             '{{.Label "config_id"}}'
         ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
 
         self.env.update({
             'TEST_RESPONSE': json.dumps([{
@@ -553,6 +563,9 @@ class HookDockerCmdTest(common.RunScriptTest):
                 'stdout': '222 deleted'
             }, {
                 'stdout': '333 deleted'
+            }, {
+                # list name and container_name label for all containers
+                'stdout': '\n'
             }])
         })
 
@@ -567,7 +580,7 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         # on the second run, abc123 is deleted,
         # docker rm is run on all containers
-        state = list(self.json_from_files(self.test_state_path, 5))
+        state = list(self.json_from_files(self.test_state_path, 6))
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -605,12 +618,24 @@ class HookDockerCmdTest(common.RunScriptTest):
             '-f',
             '333',
         ], state[4]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[5]['args'])
 
     def test_cleanup_changed(self):
         self.env.update({
             'TEST_RESPONSE': json.dumps([{
                 # list config_id labels, 3 containers same config
                 'stdout': 'abc123\nabc123\nabc123\n'
+            }, {
+                # list name and container_name label for all containers
+                'stdout': '111 111\n'
+                          '222 222\n'
+                          '333\n'
             }])
         })
         conf_dir = self.useFixture(fixtures.TempDir()).join()
@@ -623,7 +648,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                 [self.cleanup_path], self.env)
 
         # on the first run, no docker rm calls made
-        state = list(self.json_from_files(self.test_state_path, 1))
+        state = list(self.json_from_files(self.test_state_path, 2))
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -633,6 +658,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--format',
             '{{.Label "config_id"}}'
         ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
 
         # run again with changed config data
         self.env.update({
@@ -648,6 +680,9 @@ class HookDockerCmdTest(common.RunScriptTest):
                 'stdout': '222 deleted'
             }, {
                 'stdout': '333 deleted'
+            }, {
+                # list name and container_name label for all containers
+                'stdout': 'abc123 abc123\n'
             }])
         })
         new_data = copy.deepcopy(self.data)
@@ -663,7 +698,7 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         # on the second run, abc123 is deleted,
         # docker rm is run on all containers
-        state = list(self.json_from_files(self.test_state_path, 5))
+        state = list(self.json_from_files(self.test_state_path, 6))
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -701,3 +736,62 @@ class HookDockerCmdTest(common.RunScriptTest):
             '-f',
             '333',
         ], state[4]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[5]['args'])
+
+    def test_cleanup_rename(self):
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                # list config_id labels, 3 containers same config
+                'stdout': 'abc123\nabc123\nabc123\n'
+            }, {
+                # list name and container_name label for all containers
+                'stdout': '111 111-s84nf83h\n'
+                          '222 222\n'
+                          '333 333-3nd83nfi\n'
+            }])
+        })
+        conf_dir = self.useFixture(fixtures.TempDir()).join()
+        with tempfile.NamedTemporaryFile(dir=conf_dir, delete=False) as f:
+            f.write(json.dumps([self.data]))
+            f.flush()
+            self.env['HEAT_SHELL_CONFIG'] = f.name
+
+            returncode, stdout, stderr = self.run_cmd(
+                [self.cleanup_path], self.env)
+
+        # on the first run, no docker rm calls made
+        state = list(self.json_from_files(self.test_state_path, 4))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Label "config_id"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'rename',
+            '111',
+            '111-s84nf83h'
+        ], state[2]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'rename',
+            '333',
+            '333-3nd83nfi'
+        ], state[3]['args'])
