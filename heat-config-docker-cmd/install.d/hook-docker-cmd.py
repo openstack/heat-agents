@@ -15,6 +15,8 @@
 import json
 import logging
 import os
+import random
+import string
 import subprocess
 import sys
 import yaml
@@ -74,6 +76,54 @@ def label_arguments(cmd, container, cid, iv):
     ])
 
 
+def inspect(container, format=None):
+    cmd = [DOCKER_CMD, 'inspect']
+    if format:
+        cmd.append('--format')
+        cmd.append(format)
+    cmd.append(container)
+    (cmd_stdout, cmd_stderr, returncode) = execute(cmd)
+    if returncode != 0:
+        return
+    try:
+        if format:
+            return cmd_stdout
+        else:
+            return json.loads(cmd_stdout)[0]
+    except Exception as e:
+        log.error('Problem parsing docker inspect: %s' % e)
+
+
+def unique_container_name(container):
+    container_name = container
+    while inspect(container_name, format='exists'):
+        suffix = ''.join(random.choice(
+            string.ascii_lowercase + string.digits) for i in range(8))
+        container_name = '%s-%s' % (container, suffix)
+    return container_name
+
+
+def discover_container_name(container, cid):
+    cmd = [
+        DOCKER_CMD,
+        'ps',
+        '-a',
+        '--filter',
+        'label=container_name=%s' % container,
+        '--filter',
+        'label=config_id=%s' % cid,
+        '--format',
+        '{{.Names}}'
+    ]
+    (cmd_stdout, cmd_stderr, returncode) = execute(cmd)
+    if returncode != 0:
+        return container
+    names = cmd_stdout.split()
+    if names:
+        return names[0]
+    return container
+
+
 def main(argv=sys.argv):
     global log
     log = logging.getLogger('heat-config')
@@ -119,7 +169,7 @@ def main(argv=sys.argv):
                 DOCKER_CMD,
                 'run',
                 '--name',
-                container
+                unique_container_name(container)
             ]
             label_arguments(cmd, container, c.get('id'), input_values)
             if config[container].get('detach', True):
@@ -148,7 +198,14 @@ def main(argv=sys.argv):
             cmd.append(image_name)
 
         if 'command' in config[container]:
-            cmd.extend(config[container].get('command'))
+            command = config[container].get('command')
+
+            if action == 'exec':
+                # for exec, the first argument is the container name,
+                # make sure the correct one is used
+                command[0] = discover_container_name(command[0], c.get('id'))
+
+            cmd.extend(command)
 
         (cmd_stdout, cmd_stderr, returncode) = execute(cmd)
         if cmd_stdout:

@@ -69,6 +69,7 @@ class HookDockerCmdTest(common.RunScriptTest):
     data_exit_code = {
         "name": "abcdef001",
         "group": "docker-cmd",
+        "id": "abc123",
         "config": {
             "web-ls": {
                 "action": "exec",
@@ -109,11 +110,293 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.env.update({
             'TEST_RESPONSE': json.dumps([{
+                'stderr': 'Error: No such image, container or task: db',
+                'returncode': 1
+            }, {
                 'stdout': '',
                 'stderr': 'Creating db...'
             }, {
+                'stderr': 'Error: No such image, container or task: web',
+                'returncode': 1
+            }, {
                 'stdout': '',
                 'stderr': 'Creating web...'
+            }, {
+                'stdout': 'web',
+            }, {
+
+                'stdout': '',
+                'stderr': 'one.txt\ntwo.txt\nthree.txt'
+            }])
+        })
+        returncode, stdout, stderr = self.run_cmd(
+            [self.hook_path], self.env, json.dumps(self.data))
+
+        self.assertEqual(0, returncode, stderr)
+
+        self.assertEqual({
+            'deploy_stdout': '',
+            'deploy_stderr': 'Creating db...\n'
+                             'Creating web...\n'
+                             'one.txt\ntwo.txt\nthree.txt',
+            'deploy_status_code': 0
+        }, json.loads(stdout))
+
+        state = list(self.json_from_files(self.test_state_path, 6))
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'db',
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'run',
+            '--name',
+            'db',
+            '--label',
+            'deploy_stack_id=the_stack',
+            '--label',
+            'deploy_resource_name=the_deployment',
+            '--label',
+            'config_id=abc123',
+            '--label',
+            'container_name=db',
+            '--label',
+            'managed_by=docker-cmd',
+            '--detach=true',
+            '--privileged=false',
+            'xxx'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'web',
+        ], state[2]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'run',
+            '--name',
+            'web',
+            '--label',
+            'deploy_stack_id=the_stack',
+            '--label',
+            'deploy_resource_name=the_deployment',
+            '--label',
+            'config_id=abc123',
+            '--label',
+            'container_name=web',
+            '--label',
+            'managed_by=docker-cmd',
+            '--detach=true',
+            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            '--env=FOO=BAR',
+            '--net=host',
+            '--privileged=true',
+            '--restart=always',
+            '--user=root',
+            '--volume=/run:/run',
+            '--volume=db:/var/lib/db',
+            'xxx'
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=container_name=web',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}}',
+        ], state[4]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state[5]['args'])
+
+    def test_hook_exit_codes(self):
+
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                'stdout': 'web',
+            }, {
+                'stdout': '',
+                'stderr': 'Warning: custom exit code',
+                'returncode': 1
+            }])
+        })
+        returncode, stdout, stderr = self.run_cmd(
+            [self.hook_path], self.env, json.dumps(self.data_exit_code))
+
+        self.assertEqual({
+            'deploy_stdout': '',
+            'deploy_stderr': 'Warning: custom exit code',
+            'deploy_status_code': 0
+        }, json.loads(stdout))
+
+        state = list(self.json_from_files(self.test_state_path, 2))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=container_name=web',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}}',
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state[1]['args'])
+
+    def test_hook_failed(self):
+
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                'stderr': 'Error: No such image, container or task: db',
+                'returncode': 1
+            }, {
+                'stdout': '',
+                'stderr': 'Creating db...'
+            }, {
+                'stderr': 'Error: No such image, container or task: web',
+                'returncode': 1
+            }, {
+                'stdout': '',
+                'stderr': 'Creating web...'
+            }, {
+                'stdout': 'web',
+            }, {
+                'stdout': '',
+                'stderr': 'No such file or directory',
+                'returncode': 2
+            }])
+        })
+        returncode, stdout, stderr = self.run_cmd(
+            [self.hook_path], self.env, json.dumps(self.data))
+
+        self.assertEqual({
+            'deploy_stdout': '',
+            'deploy_stderr': 'Creating db...\n'
+                             'Creating web...\n'
+                             'No such file or directory',
+            'deploy_status_code': 2
+        }, json.loads(stdout))
+
+        state = list(self.json_from_files(self.test_state_path, 6))
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'db',
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'run',
+            '--name',
+            'db',
+            '--label',
+            'deploy_stack_id=the_stack',
+            '--label',
+            'deploy_resource_name=the_deployment',
+            '--label',
+            'config_id=abc123',
+            '--label',
+            'container_name=db',
+            '--label',
+            'managed_by=docker-cmd',
+            '--detach=true',
+            '--privileged=false',
+            'xxx'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'web',
+        ], state[2]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'run',
+            '--name',
+            'web',
+            '--label',
+            'deploy_stack_id=the_stack',
+            '--label',
+            'deploy_resource_name=the_deployment',
+            '--label',
+            'config_id=abc123',
+            '--label',
+            'container_name=web',
+            '--label',
+            'managed_by=docker-cmd',
+            '--detach=true',
+            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            '--env=FOO=BAR',
+            '--net=host',
+            '--privileged=true',
+            '--restart=always',
+            '--user=root',
+            '--volume=/run:/run',
+            '--volume=db:/var/lib/db',
+            'xxx'
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=container_name=web',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}}',
+        ], state[4]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'exec',
+            'web',
+            '/bin/ls',
+            '-l'
+        ], state[5]['args'])
+
+    def test_hook_unique_names(self):
+
+        self.env.update({
+            'TEST_RESPONSE': json.dumps([{
+                'stdout': 'exists\n',
+                'returncode': 0
+            }, {
+                'stderr': 'Error: No such image, container or task: db-blah',
+                'returncode': 1
+            }, {
+                'stdout': '',
+                'stderr': 'Creating db...'
+            }, {
+                'stdout': 'exists\n',
+                'returncode': 0
+            }, {
+                'stderr': 'Error: No such image, container or task: web-blah',
+                'returncode': 1
+            }, {
+                'stdout': '',
+                'stderr': 'Creating web...'
+            }, {
+                'stdout': 'web-asdf1234',
             }, {
                 'stdout': '',
                 'stderr': 'one.txt\ntwo.txt\nthree.txt'
@@ -132,12 +415,30 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state = list(self.json_from_files(self.test_state_path, 3))
+        state = list(self.json_from_files(self.test_state_path, 8))
+        db_container_name = state[1]['args'][4]
+        web_container_name = state[4]['args'][4]
+        self.assertRegex(db_container_name, 'db-[0-9a-z]{8}')
+        self.assertRegex(web_container_name, 'web-[0-9a-z]{8}')
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'db',
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            db_container_name,
+        ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'run',
             '--name',
-            'db',
+            db_container_name,
             '--label',
             'deploy_stack_id=the_stack',
             '--label',
@@ -151,12 +452,26 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--detach=true',
             '--privileged=false',
             'xxx'
-        ], state[0]['args'])
+        ], state[2]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'web',
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            web_container_name,
+        ], state[4]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'run',
             '--name',
-            'web',
+            web_container_name,
             '--label',
             'deploy_stack_id=the_stack',
             '--label',
@@ -177,121 +492,25 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
             'xxx'
-        ], state[1]['args'])
+        ], state[5]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=container_name=web',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}}',
+        ], state[6]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
-            'web',
+            'web-asdf1234',
             '/bin/ls',
             '-l'
-        ], state[2]['args'])
-
-    def test_hook_exit_codes(self):
-
-        self.env.update({
-            'TEST_RESPONSE': json.dumps({
-                'stdout': '',
-                'stderr': 'Warning: custom exit code',
-                'returncode': 1
-            })
-        })
-        returncode, stdout, stderr = self.run_cmd(
-            [self.hook_path], self.env, json.dumps(self.data_exit_code))
-
-        self.assertEqual({
-            'deploy_stdout': '',
-            'deploy_stderr': 'Warning: custom exit code',
-            'deploy_status_code': 0
-        }, json.loads(stdout))
-
-        state = list(self.json_from_files(self.test_state_path, 1))
-        self.assertEqual([
-            self.fake_tool_path,
-            'exec',
-            'web',
-            '/bin/ls',
-            '-l'
-        ], state[0]['args'])
-
-    def test_hook_failed(self):
-
-        self.env.update({
-            'TEST_RESPONSE': json.dumps([{
-                'stdout': '',
-                'stderr': 'Creating db...'
-            }, {
-                'stdout': '',
-                'stderr': 'Creating web...'
-            }, {
-                'stdout': '',
-                'stderr': 'No such file or directory',
-                'returncode': 2
-            }])
-        })
-        returncode, stdout, stderr = self.run_cmd(
-            [self.hook_path], self.env, json.dumps(self.data))
-
-        self.assertEqual({
-            'deploy_stdout': '',
-            'deploy_stderr': 'Creating db...\n'
-                             'Creating web...\n'
-                             'No such file or directory',
-            'deploy_status_code': 2
-        }, json.loads(stdout))
-
-        state = list(self.json_from_files(self.test_state_path, 3))
-        self.assertEqual([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            'db',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=db',
-            '--label',
-            'managed_by=docker-cmd',
-            '--detach=true',
-            '--privileged=false',
-            'xxx'
-        ], state[0]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            'web',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=web',
-            '--label',
-            'managed_by=docker-cmd',
-            '--detach=true',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
-            'xxx'
-        ], state[1]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'exec',
-            'web',
-            '/bin/ls',
-            '-l'
-        ], state[2]['args'])
+        ], state[7]['args'])
 
     def test_cleanup_deleted(self):
         self.env.update({
