@@ -36,19 +36,53 @@ def build_response(deploy_stdout, deploy_stderr, deploy_status_code):
     }
 
 
-def docker_arg_map(key, value):
-    value = str(value).encode('ascii', 'ignore')
-    return {
-        'environment': "--env=%s" % value,
-        'image': value,
-        'net': "--net=%s" % value,
-        'pid': "--pid=%s" % value,
-        'privileged': "--privileged=%s" % value.lower(),
-        'restart': "--restart=%s" % value,
-        'user': "--user=%s" % value,
-        'volumes': "--volume=%s" % value,
-        'volumes_from': "--volumes-from=%s" % value,
-    }.get(key, None)
+def docker_run_args(cmd, container, config):
+    cconfig = config[container]
+    if cconfig.get('detach', True):
+        cmd.append('--detach=true')
+    for v in cconfig.get('environment', []):
+        if v:
+            cmd.append('--env=%s' % v)
+    if 'net' in cconfig:
+        cmd.append('--net=%s' % cconfig['net'])
+    if 'pid' in cconfig:
+        cmd.append('--pid=%s' % cconfig['pid'])
+    if 'privileged' in cconfig:
+        cmd.append('--privileged=%s' % str(cconfig['privileged']).lower())
+    if 'restart' in cconfig:
+        cmd.append('--restart=%s' % cconfig['restart'])
+    if 'user' in cconfig:
+        cmd.append('--user=%s' % cconfig['user'])
+    for v in cconfig.get('volumes', []):
+        if v:
+            cmd.append('--volume=%s' % v)
+    for v in cconfig.get('volumes_from', []):
+        if v:
+            cmd.append('--volumes_from=%s' % v)
+
+    cmd.append(cconfig.get('image', ''))
+    cmd.extend(command_argument(cmd, cconfig.get('command')))
+
+
+def docker_exec_args(cmd, container, config, cid):
+    cconfig = config[container]
+    if 'privileged' in cconfig:
+        cmd.append('--privileged=%s' % str(cconfig['privileged']).lower())
+    if 'user' in cconfig:
+        cmd.append('--user=%s' % cconfig['user'])
+    command = command_argument(cmd, cconfig.get('command'))
+    # for exec, the first argument is the container name,
+    # make sure the correct one is used
+    command[0] = discover_container_name(command[0], cid)
+    cmd.extend(command)
+
+
+def command_argument(cmd, command):
+    if not command:
+        return []
+    if not isinstance(command, list):
+        return [command]
+    return command
 
 
 def execute(cmd):
@@ -144,6 +178,7 @@ def main(argv=sys.argv):
         return
 
     config = c.get('config', '')
+    cid = c.get('id')
     if not config:
         log.debug("No 'config' input found, nothing to do.")
         json.dump(build_response(
@@ -171,41 +206,11 @@ def main(argv=sys.argv):
                 '--name',
                 unique_container_name(container)
             ]
-            label_arguments(cmd, container, c.get('id'), input_values)
-            if config[container].get('detach', True):
-                cmd.append('--detach=true')
+            label_arguments(cmd, container, cid, input_values)
+            docker_run_args(cmd, container, config)
         elif action == 'exec':
             cmd = [DOCKER_CMD, 'exec']
-
-        image_name = ''
-        for key in sorted(config[container]):
-            # These ones contain a list of values
-            if key in ['environment', 'volumes', 'volumes_from']:
-                for value in config[container][key]:
-                    # Somehow the lists get empty values sometimes
-                    if type(value) is unicode and not value.strip():
-                        continue
-                    cmd.append(docker_arg_map(key, value))
-            elif key == 'image':
-                image_name = config[container][key].encode('ascii', 'ignore')
-            else:
-                arg = docker_arg_map(key, config[container][key])
-                if arg:
-                    cmd.append(arg)
-
-        # Image name and command come last.
-        if action == 'run':
-            cmd.append(image_name)
-
-        if 'command' in config[container]:
-            command = config[container].get('command')
-
-            if action == 'exec':
-                # for exec, the first argument is the container name,
-                # make sure the correct one is used
-                command[0] = discover_container_name(command[0], c.get('id'))
-
-            cmd.extend(command)
+            docker_exec_args(cmd, container, config, cid)
 
         (cmd_stdout, cmd_stderr, returncode) = execute(cmd)
         if cmd_stdout:
