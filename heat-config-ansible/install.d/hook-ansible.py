@@ -53,6 +53,7 @@ def main(argv=sys.argv):
     tags = c['options'].get('tags')
     skip_tags = c['options'].get('skip_tags')
     modulepath = c['options'].get('modulepath')
+    callback_plugins = c['options'].get('callback_plugins')
 
     fn = os.path.join(WORKING_DIR, '%s_playbook.yaml' % c['id'])
     vars_filename = os.path.join(WORKING_DIR, '%s_variables.json' % c['id'])
@@ -89,10 +90,16 @@ def main(argv=sys.argv):
         cmd.insert(3, '--module-path')
         cmd.insert(4, modulepath)
 
+    env = os.environ.copy()
+    if callback_plugins:
+        env.update({
+            'ANSIBLE_CALLBACK_PLUGINS': callback_plugins
+        })
+
     log.debug('Running %s' % (' '.join(cmd),))
     try:
         subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+                                   stderr=subprocess.PIPE, env=env)
     except OSError:
         log.warn("ansible not installed yet")
         return
