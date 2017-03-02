@@ -48,11 +48,12 @@ class HookDockerCmdTest(common.RunScriptTest):
             "web": {
                 "name": "y",
                 "start_order": 1,
-                "image": "xxx",
+                "image": "yyy",
                 "net": "host",
                 "restart": "always",
                 "privileged": True,
                 "user": "root",
+                "command": "/bin/webserver start",
                 "volumes": [
                     "/run:/run",
                     "db:/var/lib/db"
@@ -168,6 +169,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--detach=true',
             '--privileged=false',
             'xxx'
+            ''
         ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -200,7 +202,9 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--user=root',
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
-            'xxx'
+            'yyy',
+            '/bin/webserver',
+            'start'
         ], state[3]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -353,7 +357,9 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--user=root',
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
-            'xxx'
+            'yyy',
+            '/bin/webserver',
+            'start'
         ], state[3]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -491,7 +497,9 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--user=root',
             '--volume=/run:/run',
             '--volume=db:/var/lib/db',
-            'xxx'
+            'yyy',
+            '/bin/webserver',
+            'start'
         ], state[5]['args'])
         self.assertEqual([
             self.fake_tool_path,
