@@ -58,6 +58,11 @@ class HookAnsibleTest(common.RunScriptTest):
                     'tags':       'abc,def'},
     })
 
+    data_callback_plugins = data.copy()
+    data_callback_plugins.update({
+        'options': {'callback_plugins': '/usr/lib/python/foo'}
+    })
+
     data_skip_tags = data.copy()
     data_skip_tags.update({'options': {'skip_tags': 'abc,def'}})
 
@@ -133,14 +138,25 @@ class HookAnsibleTest(common.RunScriptTest):
                                 '/opt/ansible:/usr/share/ansible',
                                 '--skip-tags', 'abc,def'])
 
-    def _hook_run(self, data=None, options=None):
+    def test_hook_with_callback_plugins(self):
+        self.assertTrue('ANSIBLE_CALLBACK_PLUGINS' not in self.env)
 
+        state = self._hook_run(data=self.data_callback_plugins)
+        opt = self.data_callback_plugins['options']['callback_plugins']
+        self.assertEqual(self.env['ANSIBLE_CALLBACK_PLUGINS'], opt)
+        self.assertEqual(state['env']['ANSIBLE_CALLBACK_PLUGINS'], opt)
+
+    def _hook_run(self, data=None, options=None):
         self.env.update({
             'TEST_RESPONSE': json.dumps({
                 'stdout': 'ansible success',
                 'stderr': 'thing happened',
             }),
         })
+        if data is not None and 'callback_plugins' in data['options']:
+            self.env.update({
+                'ANSIBLE_CALLBACK_PLUGINS': data['options']['callback_plugins']
+            })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(data or self.data))
 
@@ -177,6 +193,8 @@ class HookAnsibleTest(common.RunScriptTest):
         # Write the executable 'config' to file
         with open(ansible_playbook) as f:
             self.assertEqual('the ansible playbook', f.read())
+
+        return state
 
     def test_hook_inventory(self):
 
