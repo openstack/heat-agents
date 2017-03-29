@@ -18,9 +18,6 @@ import os
 import subprocess
 import sys
 
-import yaml
-
-
 CONF_FILE = os.environ.get('HEAT_SHELL_CONFIG',
                            '/var/run/heat-config/heat-config')
 
@@ -50,9 +47,10 @@ def main(argv=sys.argv):
         log.warning('Could not load config json: %s' % e)
         return 1
 
-    cmd_configs = list(build_configs(configs))
+    cmd_config_ids = [c['id'] for c in configs
+                      if c['group'] == 'docker-cmd']
     try:
-        delete_missing_configs(cmd_configs)
+        delete_missing_configs(cmd_config_ids)
     except Exception as e:
         log.exception(e)
     try:
@@ -61,18 +59,7 @@ def main(argv=sys.argv):
         log.exception(e)
 
 
-def build_configs(configs):
-    for c in configs:
-        if c['group'] != 'docker-cmd':
-            continue
-        if not isinstance(c['config'], dict):
-            # convert config to dict
-            c['config'] = yaml.safe_load(c['config'])
-        yield c
-
-
-def delete_missing_configs(configs):
-    config_ids = [c['id'] for c in configs]
+def delete_missing_configs(config_ids):
     for conf_id in current_config_ids():
         if conf_id not in config_ids:
             log.debug('%s no longer exists, deleting containers' % conf_id)
@@ -128,7 +115,7 @@ def rename_containers():
     ]
     cmd_stdout, cmd_stderr, returncode = execute(cmd)
     if returncode != 0:
-        return 
+        return
 
     lines = cmd_stdout.split("\n")
     current_containers = []
