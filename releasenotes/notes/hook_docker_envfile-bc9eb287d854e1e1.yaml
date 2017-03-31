@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Add docker hook for environment files. Some containerized services need to
+    accept environment files and cannot be configured otherwise, for example
+    Etcd key-value storage.

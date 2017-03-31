@@ -38,6 +38,8 @@ class HookDockerCmdTest(common.RunScriptTest):
                 "name": "x",
                 "image": "xxx",
                 "privileged": False,
+                "environment": ["foo=bar"],
+                "env_file": "env.file",
                 "start_order": 0
             },
             "web-ls": {
@@ -60,8 +62,11 @@ class HookDockerCmdTest(common.RunScriptTest):
                 "environment": [
                     "KOLLA_CONFIG_STRATEGY=COPY_ALWAYS",
                     "FOO=BAR"
+                ],
+                "env_file": [
+                    "foo.env",
+                    "bar.conf"
                 ]
-
             }
         }
     }
@@ -166,6 +171,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=env.file',
+            '--env=foo=bar',
             '--privileged=false',
             'xxx'
         ], state[1]['args'])
@@ -192,6 +199,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=foo.env',
+            '--env-file=bar.conf',
             '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
             '--env=FOO=BAR',
             '--net=host',
@@ -319,6 +328,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=env.file',
+            '--env=foo=bar',
             '--privileged=false',
             'xxx'
         ], state[1]['args'])
@@ -345,6 +356,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=foo.env',
+            '--env-file=bar.conf',
             '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
             '--env=FOO=BAR',
             '--net=host',
@@ -450,6 +463,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=env.file',
+            '--env=foo=bar',
             '--privileged=false',
             'xxx'
         ], state[2]['args'])
@@ -483,6 +498,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--label',
             'managed_by=docker-cmd',
             '--detach=true',
+            '--env-file=foo.env',
+            '--env-file=bar.conf',
             '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
             '--env=FOO=BAR',
             '--net=host',

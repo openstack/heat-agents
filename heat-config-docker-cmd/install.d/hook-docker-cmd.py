@@ -40,6 +40,13 @@ def docker_run_args(cmd, container, config):
     cconfig = config[container]
     if cconfig.get('detach', True):
         cmd.append('--detach=true')
+    if 'env_file' in cconfig:
+        if isinstance(cconfig['env_file'], list):
+            for f in cconfig.get('env_file', []):
+                if f:
+                    cmd.append('--env-file=%s' % f)
+        else:
+            cmd.append('--env-file=%s' % cconfig['env_file'])
     for v in cconfig.get('environment', []):
         if v:
             cmd.append('--env=%s' % v)
