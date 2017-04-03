@@ -88,7 +88,7 @@ def command_argument(cmd, command):
     if not command:
         return []
     if not isinstance(command, list):
-        return [command]
+        return command.split()
     return command
 
 
