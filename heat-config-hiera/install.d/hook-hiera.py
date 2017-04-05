@@ -15,18 +15,12 @@
 import json
 import logging
 import os
-import subprocess
 import sys
 
 
 HIERA_DATADIR = os.environ.get('HEAT_PUPPET_HIERA_DATADIR',
                                '/etc/puppet/hieradata')
 HIERA_CONFIG = os.environ.get('HEAT_HIERA_CONFIG', '/etc/puppet/hiera.yaml')
-HIERA_ELEMENT_CHECK_CMD = os.environ.get('HEAT_HIERA_ELEMENT_CHECK_CMD',
-                                         'os-apply-config '
-                                         '--key hiera.datafiles '
-                                         '--type raw --key-default empty')
-
 
 HIERA_CONFIG_BASE = """
 ---
@@ -44,28 +38,25 @@ def prepare_dir(path):
 
 
 def exit_legacy_hiera_detected():
-    try:
-        subproc = subprocess.Popen(HIERA_ELEMENT_CHECK_CMD.split(" "),
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        stdout, stderr = subproc.communicate()
-        if stdout.rstrip() != 'empty':
-            err_msg = ('Legacy hieradata from os-apply-config has been '
-                       'detected. Please update all of your interfaces '
-                       'to use the new heat-agents hiera hook before '
-                       'proceeding')
-            response = {
-                'deploy_stdout': stdout,
-                'deploy_stderr': err_msg,
-                'deploy_status_code': 1,
-            }
+    if os.path.isfile(
+            '/usr/libexec/os-apply-config/templates/etc/puppet/hiera.yaml'
+    ) or os.path.isfile(
+        '/usr/libexec/os-refresh-config/configure.d/40-hiera-datafiles'
+    ):
+        err_msg = ('Legacy hiera hook or data has been detected. '
+                   'Please update all of your interfaces to use the new '
+                   'heat-agents hiera hook before proceeding. '
+                   'See http://lists.openstack.org/pipermail/openstack-dev/'
+                   '2017-January/110922.html or bug 1680006 for more '
+                   'information.')
+        response = {
+            'deploy_stdout': '',
+            'deploy_stderr': err_msg,
+            'deploy_status_code': 1,
+        }
 
-            json.dump(response, sys.stdout)
-            sys.exit(0)
-
-    except OSError:
-        # os-apply-config is not installed? Assume there is no legacy data.
-        pass
+        json.dump(response, sys.stdout)
+        sys.exit(0)
 
 
 def main(argv=sys.argv):
