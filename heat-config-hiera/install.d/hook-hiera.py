@@ -49,11 +49,12 @@ def exit_legacy_hiera_detected():
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         stdout, stderr = subproc.communicate()
-        if stdout.rstrip() != 'empty':
+        rs_stdout = stdout.rstrip()
+        if rs_stdout != 'empty':
             err_msg = ('Legacy hieradata from os-apply-config has been '
-                       'detected. Please update all of your interfaces '
+                       'detected - %s. Please update all of your interfaces '
                        'to use the new heat-agents hiera hook before '
-                       'proceeding')
+                       'proceeding' % rs_stdout)
             response = {
                 'deploy_stdout': stdout,
                 'deploy_stderr': err_msg,
