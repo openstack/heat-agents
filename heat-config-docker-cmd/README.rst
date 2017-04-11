@@ -1,4 +1,5 @@
-A hook which uses the `docker` command to deploy containers.
+A hook which uses the `docker` command via
+`paunch <https://docs.openstack.org/developer/paunch/>`_ to deploy containers.
 
 The hook currently supports specifying containers in the `docker-compose v1
 format <https://docs.docker.com/compose/compose-file/#/version-1>`_. The

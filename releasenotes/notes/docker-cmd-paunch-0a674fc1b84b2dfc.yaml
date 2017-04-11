@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    The logic for the docker-cmd hook is now provided by the paunch library,
+    where further feature work will occur.

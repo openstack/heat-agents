@@ -112,28 +112,54 @@ class HookDockerCmdTest(common.RunScriptTest):
             'TEST_STATE_PATH': self.test_state_path,
         })
 
+    def assert_args_and_labels(self, expected_args, expected_labels, observed):
+        '''Assert the labels arguments separately to other arguments.
+
+        Tests that each expected_labels label exists, and remaining
+        expected arguments match exactly.
+
+        This allows paunch to add new label arguments without breaking these
+        tests.
+        '''
+
+        args = []
+        labels = []
+        j = 0
+        while j < len(observed):
+            if observed[j] == '--label':
+                j += 1
+                labels.append(observed[j])
+            else:
+                args.append(observed[j])
+            j += 1
+
+        self.assertEqual(expected_args, args)
+        for label in expected_labels:
+            self.assertIn(label, labels)
+
     def test_hook(self):
 
         self.env.update({
-            'TEST_RESPONSE': json.dumps([{
-                'stderr': 'Error: No such image, container or task: db',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating db...'
-            }, {
-                'stderr': 'Error: No such image, container or task: web',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating web...'
-            }, {
-                'stdout': 'web',
-            }, {
-
-                'stdout': '',
-                'stderr': 'one.txt\ntwo.txt\nthree.txt'
-            }])
+            'TEST_RESPONSE': json.dumps([
+                # ps for delete missing
+                {},
+                # ps for renames
+                {},
+                # ps for currently running containers
+                {},
+                # inspect for db unique container name
+                {},
+                # docker run db
+                {'stderr': 'Creating db...'},
+                # inspect for web unique container name
+                {},
+                # docker run web
+                {'stderr': 'Creating web...'},
+                # name lookup for exec web
+                {'stdout': 'web'},
+                # docker exec web
+                {'stderr': 'one.txt\ntwo.txt\nthree.txt'},
+            ])
         })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data))
@@ -148,58 +174,75 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state = list(self.json_from_files(self.test_state_path, 6))
+        state = list(self.json_from_files(self.test_state_path, 9))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
-            'db',
-        ], state[0]['args'])
-        self.assertEqual([
+            'db'
+        ], state[3]['args'])
+        self.assert_args_and_labels([
             self.fake_tool_path,
             'run',
             '--name',
             'db',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=db',
-            '--label',
-            'managed_by=docker-cmd',
             '--detach=true',
             '--env-file=env.file',
             '--env=foo=bar',
             '--privileged=false',
             'xxx'
             ''
-        ], state[1]['args'])
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=db',
+            'managed_by=docker-cmd',
+        ], state[4]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
             'web',
-        ], state[2]['args'])
-        self.assertEqual([
+        ], state[5]['args'])
+        self.assert_args_and_labels([
             self.fake_tool_path,
             'run',
             '--name',
             'web',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=web',
-            '--label',
-            'managed_by=docker-cmd',
             '--detach=true',
             '--env-file=foo.env',
             '--env-file=bar.conf',
@@ -214,7 +257,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             'yyy',
             '/bin/webserver',
             'start'
-        ], state[3]['args'])
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=web',
+            'managed_by=docker-cmd',
+        ], state[6]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -225,25 +274,32 @@ class HookDockerCmdTest(common.RunScriptTest):
             'label=config_id=abc123',
             '--format',
             '{{.Names}}',
-        ], state[4]['args'])
+        ], state[7]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state[5]['args'])
+        ], state[8]['args'])
 
     def test_hook_exit_codes(self):
 
         self.env.update({
-            'TEST_RESPONSE': json.dumps([{
-                'stdout': 'web',
-            }, {
-                'stdout': '',
-                'stderr': 'Warning: custom exit code',
-                'returncode': 1
-            }])
+            'TEST_RESPONSE': json.dumps([
+                # ps for delete missing
+                {},
+                # ps for renames
+                {},
+                # ps for currently running containers
+                {},
+                {'stdout': 'web'},
+                {
+                    'stdout': '',
+                    'stderr': 'Warning: custom exit code',
+                    'returncode': 1
+                }
+            ])
         })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data_exit_code))
@@ -254,7 +310,38 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state = list(self.json_from_files(self.test_state_path, 2))
+        state = list(self.json_from_files(self.test_state_path, 5))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -265,37 +352,42 @@ class HookDockerCmdTest(common.RunScriptTest):
             'label=config_id=abc123',
             '--format',
             '{{.Names}}',
-        ], state[0]['args'])
+        ], state[3]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state[1]['args'])
+        ], state[4]['args'])
 
     def test_hook_failed(self):
 
         self.env.update({
-            'TEST_RESPONSE': json.dumps([{
-                'stderr': 'Error: No such image, container or task: db',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating db...'
-            }, {
-                'stderr': 'Error: No such image, container or task: web',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating web...'
-            }, {
-                'stdout': 'web',
-            }, {
-                'stdout': '',
-                'stderr': 'No such file or directory',
-                'returncode': 2
-            }])
+            'TEST_RESPONSE': json.dumps([
+                # ps for delete missing
+                {},
+                # ps for renames
+                {},
+                # ps for currently running containers
+                {},
+                # inspect for db unique container name
+                {},
+                # docker run db
+                {'stderr': 'Creating db...'},
+                # inspect for web unique container name
+                {},
+                # docker run web
+                {'stderr': 'Creating web...'},
+                # name lookup for exec web
+                {'stdout': 'web'},
+                # docker exec web fails
+                {
+                    'stdout': '',
+                    'stderr': 'No such file or directory',
+                    'returncode': 2
+                }
+            ])
         })
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data))
@@ -308,57 +400,75 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 2
         }, json.loads(stdout))
 
-        state = list(self.json_from_files(self.test_state_path, 6))
+        state = list(self.json_from_files(self.test_state_path, 9))
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
+        ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
-            'db',
-        ], state[0]['args'])
-        self.assertEqual([
+            'db'
+        ], state[3]['args'])
+        self.assert_args_and_labels([
             self.fake_tool_path,
             'run',
             '--name',
             'db',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=db',
-            '--label',
-            'managed_by=docker-cmd',
             '--detach=true',
             '--env-file=env.file',
             '--env=foo=bar',
             '--privileged=false',
             'xxx'
-        ], state[1]['args'])
+            ''
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=db',
+            'managed_by=docker-cmd',
+        ], state[4]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
             'web',
-        ], state[2]['args'])
-        self.assertEqual([
+        ], state[5]['args'])
+        self.assert_args_and_labels([
             self.fake_tool_path,
             'run',
             '--name',
             'web',
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=web',
-            '--label',
-            'managed_by=docker-cmd',
             '--detach=true',
             '--env-file=foo.env',
             '--env-file=bar.conf',
@@ -373,7 +483,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             'yyy',
             '/bin/webserver',
             'start'
-        ], state[3]['args'])
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=web',
+            'managed_by=docker-cmd',
+        ], state[6]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -384,43 +500,47 @@ class HookDockerCmdTest(common.RunScriptTest):
             'label=config_id=abc123',
             '--format',
             '{{.Names}}',
-        ], state[4]['args'])
+        ], state[7]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state[5]['args'])
+        ], state[8]['args'])
 
     def test_hook_unique_names(self):
-
         self.env.update({
-            'TEST_RESPONSE': json.dumps([{
-                'stdout': 'exists\n',
-                'returncode': 0
-            }, {
-                'stderr': 'Error: No such image, container or task: db-blah',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating db...'
-            }, {
-                'stdout': 'exists\n',
-                'returncode': 0
-            }, {
-                'stderr': 'Error: No such image, container or task: web-blah',
-                'returncode': 1
-            }, {
-                'stdout': '',
-                'stderr': 'Creating web...'
-            }, {
-                'stdout': 'web-asdf1234',
-            }, {
-                'stdout': '',
-                'stderr': 'one.txt\ntwo.txt\nthree.txt'
-            }])
+            'TEST_RESPONSE': json.dumps([
+                # ps for delete missing in this config id
+                {},
+                # ps for renames
+                {'stdout': 'web web\ndb db\n'},
+                # ps for currently running containers in this config id
+                {},
+                # inspect for db unique container name
+                {'stdout': 'exists'},
+                {
+                    'stderr': 'Error: No such container: db-blah',
+                    'returncode': 1
+                },
+                # docker run db
+                {'stderr': 'Creating db...'},
+                # # inspect for web unique container name
+                {'stdout': 'exists'},
+                {
+                    'stderr': 'Error: No such container: web-blah',
+                    'returncode': 1
+                },
+                # # docker run web
+                {'stderr': 'Creating web...'},
+                # name lookup for exec web
+                {'stdout': 'web-asdf1234'},
+                # docker exec web-asdf1234
+                {'stderr': 'one.txt\ntwo.txt\nthree.txt'},
+            ])
         })
+
         returncode, stdout, stderr = self.run_cmd(
             [self.hook_path], self.env, json.dumps(self.data))
 
@@ -434,75 +554,92 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout))
 
-        state = list(self.json_from_files(self.test_state_path, 8))
-        db_container_name = state[1]['args'][4]
-        web_container_name = state[4]['args'][4]
+        state = list(self.json_from_files(self.test_state_path, 11))
+        db_container_name = state[4]['args'][4]
+        web_container_name = state[7]['args'][4]
         self.assertRegex(db_container_name, 'db-[0-9a-z]{8}')
         self.assertRegex(web_container_name, 'web-[0-9a-z]{8}')
         self.assertEqual([
             self.fake_tool_path,
-            'inspect',
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
             '--format',
-            'exists',
-            'db',
+            '{{.Names}} {{.Label "container_name"}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
-            'inspect',
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
-            'exists',
-            db_container_name,
+            '{{.Names}} {{.Label "container_name"}}'
         ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
-            'run',
-            '--name',
-            db_container_name,
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=db',
-            '--label',
-            'managed_by=docker-cmd',
-            '--detach=true',
-            '--env-file=env.file',
-            '--env=foo=bar',
-            '--privileged=false',
-            'xxx'
+            'ps',
+            '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
+            '--filter',
+            'label=config_id=abc123',
+            '--format',
+            '{{.Names}} {{.Label "container_name"}}'
         ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
-            'web',
+            'db'
         ], state[3]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'inspect',
             '--format',
             'exists',
-            web_container_name,
+            db_container_name,
         ], state[4]['args'])
+        self.assert_args_and_labels([
+            self.fake_tool_path,
+            'run',
+            '--name',
+            db_container_name,
+            '--detach=true',
+            '--env-file=env.file',
+            '--env=foo=bar',
+            '--privileged=false',
+            'xxx'
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=db',
+            'managed_by=docker-cmd',
+        ], state[5]['args'])
         self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            'web',
+        ], state[6]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--format',
+            'exists',
+            web_container_name,
+        ], state[7]['args'])
+        self.assert_args_and_labels([
             self.fake_tool_path,
             'run',
             '--name',
             web_container_name,
-            '--label',
-            'deploy_stack_id=the_stack',
-            '--label',
-            'deploy_resource_name=the_deployment',
-            '--label',
-            'config_id=abc123',
-            '--label',
-            'container_name=web',
-            '--label',
-            'managed_by=docker-cmd',
             '--detach=true',
             '--env-file=foo.env',
             '--env-file=bar.conf',
@@ -517,7 +654,13 @@ class HookDockerCmdTest(common.RunScriptTest):
             'yyy',
             '/bin/webserver',
             'start'
-        ], state[5]['args'])
+        ], [
+            'deploy_stack_id=the_stack',
+            'deploy_resource_name=the_deployment',
+            'config_id=abc123',
+            'container_name=web',
+            'managed_by=docker-cmd',
+        ], state[8]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -528,14 +671,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             'label=config_id=abc123',
             '--format',
             '{{.Names}}',
-        ], state[6]['args'])
+        ], state[9]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web-asdf1234',
             '/bin/ls',
             '-l'
-        ], state[7]['args'])
+        ], state[10]['args'])
 
     def test_cleanup_deleted(self):
         self.env.update({
@@ -571,6 +714,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'ps',
             '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
             '{{.Names}} {{.Label "container_name"}}'
         ], state[1]['args'])
@@ -647,6 +792,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'ps',
             '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
             '{{.Names}} {{.Label "container_name"}}'
         ], state[5]['args'])
@@ -687,6 +834,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'ps',
             '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
             '{{.Names}} {{.Label "container_name"}}'
         ], state[1]['args'])
@@ -765,6 +914,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'ps',
             '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
             '{{.Names}} {{.Label "container_name"}}'
         ], state[5]['args'])
@@ -805,6 +956,8 @@ class HookDockerCmdTest(common.RunScriptTest):
             self.fake_tool_path,
             'ps',
             '-a',
+            '--filter',
+            'label=managed_by=docker-cmd',
             '--format',
             '{{.Names}} {{.Label "container_name"}}'
         ], state[1]['args'])
