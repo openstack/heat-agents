@@ -47,6 +47,7 @@ def main(argv=sys.argv):
     c = json.load(sys.stdin)
 
     variables = {}
+    variables['heat_config_id'] = c['id']
     for input in c['inputs']:
         variables[input['name']] = input.get('value', '')
 

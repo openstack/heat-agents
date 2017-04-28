@@ -187,6 +187,7 @@ class HookAnsibleTest(common.RunScriptTest):
         variables = self.json_from_file(vars_filename)
         self.assertEqual('bar', variables['foo'])
         self.assertEqual('input', variables['another'])
+        self.assertEqual('1234', variables['heat_config_id'])
         self.assertEqual(self.outputs_dir.join('1234'),
                          variables['heat_outputs_path'])
 
