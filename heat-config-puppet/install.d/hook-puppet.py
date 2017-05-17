@@ -108,7 +108,7 @@ def main(argv=sys.argv):
                    'w') as f:
         f.write(c.get('config', '').encode('utf-8'))
 
-    cmd = [PUPPET_CMD, 'apply', '--detailed-exitcodes', fn]
+    cmd = [PUPPET_CMD, 'apply', '--color', 'false', '--detailed-exitcodes', fn]
     # This is the default log destination to print out to the console and
     # captured by heat via the subprocess method below.
     cmd.insert(-1, '--logdest')
