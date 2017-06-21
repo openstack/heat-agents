@@ -101,6 +101,8 @@ class HookPuppetTest(common.RunScriptTest):
             [
                 self.fake_tool_path,
                 'apply',
+                '--color',
+                'false',
                 '--detailed-exitcodes',
                 '--logdest',
                 'console',
@@ -138,6 +140,8 @@ class HookPuppetTest(common.RunScriptTest):
             [
                 self.fake_tool_path,
                 'apply',
+                '--color',
+                'false',
                 '--detailed-exitcodes',
                 '--logdest',
                 'console',
@@ -166,6 +170,8 @@ class HookPuppetTest(common.RunScriptTest):
             [
                 self.fake_tool_path,
                 'apply',
+                '--color',
+                'false',
                 '--detailed-exitcodes',
                 '--logdest',
                 'console',
@@ -202,6 +208,8 @@ class HookPuppetTest(common.RunScriptTest):
             [
                 self.fake_tool_path,
                 'apply',
+                '--color',
+                'false',
                 '--detailed-exitcodes',
                 '--logdest',
                 'console',
@@ -258,6 +266,8 @@ class HookPuppetTest(common.RunScriptTest):
             [
                 self.fake_tool_path,
                 'apply',
+                '--color',
+                'false',
                 '--detailed-exitcodes',
                 '--logdest',
                 'console',
