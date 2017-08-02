@@ -11,7 +11,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
 import json
 import tempfile
 
@@ -77,10 +76,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         super(HeatConfigNotifyTest, self).setUp()
         self.deployed_dir = self.useFixture(fixtures.TempDir())
         hcn.init_logging = mock.MagicMock()
-        if six.PY2:
-            self.stdin = io.BytesIO()
-        else:
-            self.stdin = io.StringIO()
+        self.stdin = six.StringIO()
 
     def write_config_file(self, data):
         config_file = tempfile.NamedTemporaryFile(mode='w')

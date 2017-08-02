@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
 import json
 import logging
 import os
@@ -82,13 +81,13 @@ def configure_logging():
     handler.setFormatter(formatter)
     log.addHandler(handler)
 
-    deploy_stdout = io.StringIO()
+    deploy_stdout = six.StringIO()
     handler = logging.StreamHandler(deploy_stdout)
     handler.setFormatter(formatter)
     handler.setLevel('DEBUG')
     log.addHandler(handler)
 
-    deploy_stderr = io.StringIO()
+    deploy_stderr = six.StringIO()
     handler = logging.StreamHandler(deploy_stderr)
     handler.setFormatter(formatter)
     handler.setLevel('WARN')
