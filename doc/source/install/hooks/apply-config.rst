@@ -1,3 +1,7 @@
+============
+apply-config
+============
+
 A hook which invokes os-apply-config.
 
 The intent is for this element (hook script) to be used in place of the one in

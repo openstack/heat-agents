@@ -1,3 +1,7 @@
+==========
+docker-cmd
+==========
+
 A hook which uses the `docker` command via
 `paunch <https://docs.openstack.org/developer/paunch/>`_ to deploy containers.
 

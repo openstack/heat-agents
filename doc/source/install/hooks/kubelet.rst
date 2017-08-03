@@ -1,3 +1,7 @@
+=======
+kubelet
+=======
+
 This hook uses the kubelet agent from the kubernetes project to provision
 containers. The StructuredConfig resource data represents a pod of containers
 to be provisioned.

@@ -1,8 +1,12 @@
+====
+chef
+====
+
 A hook which invokes ``chef-client`` in local mode (chef zero) on the
 provided configuration.
 
-Inputs:
--------
+Inputs
+------
 Inputs are attribute overrides. In order to format them correctly for
 consumption, you need to explicitly declare each top-level section as an
 input of type ``Json`` in your config resource.
@@ -12,16 +16,16 @@ Additionally, there is a special input named ``environment`` of type
 applying the config. You do not have to explicitly declare this input in
 the config resource.
 
-Outputs:
---------
+Outputs
+-------
 If you need to capture specific outputs from your chef run, you should
 specify the output name(s) as normal in your config. Then, your recipes
 should write files to the directory specified by the ``heat_outputs_path``
 environment variable. The file name should match the name of the output
 you are trying to capture.
 
-Options:
--------------
+Options
+-------
 
 kitchen : optional
     A URL for a Git repository containing the desired recipes, roles,
