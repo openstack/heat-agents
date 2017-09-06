@@ -20,6 +20,8 @@ import stat
 import subprocess
 import sys
 
+# legacy groups that have never had a hook script
+WHITELISTED_MISSING_HOOK_SCRIPTS = ['os-apply-config']
 HOOKS_DIR_PATHS = (
     os.environ.get('HEAT_CONFIG_HOOKS'),
     '/usr/libexec/heat-config/hooks',
@@ -128,8 +130,9 @@ def invoke_hook(c, log):
     hook_path = find_hook_path(c['group'])
 
     if not hook_path:
-        log.error('Skipping group %s with no hook script %s' % (
-            c['group'], hook_path))
+        if not c['group'] in WHITELISTED_MISSING_HOOK_SCRIPTS:
+            log.error('Skipping group %s with no hook script %s' % (
+                c['group'], hook_path))
         return
 
     # write out config, which indicates it is deployed regardless of
