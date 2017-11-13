@@ -111,9 +111,14 @@ class HeatConfigNotifyTest(common.RunScriptTest):
 
     def test_notify_signal_id(self):
         requests = mock.MagicMock()
-        hcn.requests = requests
+        session = mock.MagicMock()
+        requests.Session.return_value = session
+        retry = mock.MagicMock()
+        httpadapter = mock.MagicMock()
 
-        requests.post.return_value = '[200]'
+        hcn.requests = requests
+        hcn.Retry = retry
+        hcn.HTTPAdapter = httpadapter
 
         signal_data = json.dumps({'foo': 'bar'})
         self.stdin.write(signal_data)
@@ -124,16 +129,23 @@ class HeatConfigNotifyTest(common.RunScriptTest):
                 0,
                 hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
-        requests.post.assert_called_once_with(
+        session.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
             data=signal_data,
             headers={'content-type': 'application/json'})
 
     def test_notify_signal_id_put(self):
         requests = mock.MagicMock()
-        hcn.requests = requests
+        session = mock.MagicMock()
+        requests.Session.return_value = session
+        retry = mock.MagicMock()
+        httpadapter = mock.MagicMock()
 
-        requests.post.return_value = '[200]'
+        hcn.requests = requests
+        hcn.Retry = retry
+        hcn.HTTPAdapter = httpadapter
+
+        session.post.return_value = '[200]'
 
         signal_data = json.dumps({'foo': 'bar'})
         self.stdin.write(signal_data)
@@ -144,32 +156,46 @@ class HeatConfigNotifyTest(common.RunScriptTest):
                 0,
                 hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
-        requests.put.assert_called_once_with(
+        session.put.assert_called_once_with(
             'mock://192.0.2.3/foo',
             data=signal_data,
             headers={'content-type': 'application/json'})
 
     def test_notify_signal_id_empty_data(self):
         requests = mock.MagicMock()
-        hcn.requests = requests
+        session = mock.MagicMock()
+        requests.Session.return_value = session
+        retry = mock.MagicMock()
+        httpadapter = mock.MagicMock()
 
-        requests.post.return_value = '[200]'
+        hcn.requests = requests
+        hcn.Retry = retry
+        hcn.HTTPAdapter = httpadapter
+
+        session.post.return_value = '[200]'
 
         with self.write_config_file(self.data_signal_id) as config_file:
             self.assertEqual(
                 0,
                 hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
-        requests.post.assert_called_once_with(
+        session.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
             data='{}',
             headers={'content-type': 'application/json'})
 
     def test_notify_signal_id_invalid_json_data(self):
         requests = mock.MagicMock()
-        hcn.requests = requests
+        session = mock.MagicMock()
+        requests.Session.return_value = session
+        retry = mock.MagicMock()
+        httpadapter = mock.MagicMock()
 
-        requests.post.return_value = '[200]'
+        hcn.requests = requests
+        hcn.Retry = retry
+        hcn.HTTPAdapter = httpadapter
+
+        session.post.return_value = '[200]'
 
         signal_data = json.dumps({'foo': 'bar'})
         self.stdin.write(signal_data)
@@ -181,7 +207,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
                 0,
                 hcn.main(['heat-config-notify', config_file.name], self.stdin))
 
-        requests.post.assert_called_once_with(
+        session.post.assert_called_once_with(
             'mock://192.0.2.3/foo',
             data='{}',
             headers={'content-type': 'application/json'})

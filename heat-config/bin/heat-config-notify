@@ -19,6 +19,9 @@ import sys
 
 import requests
 
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 try:
     from heatclient import client as heatclient
 except ImportError:
@@ -105,12 +108,25 @@ def main(argv=sys.argv, stdin=sys.stdin):
         # we need to trim log content because Heat response size is limited
         # by max_json_body_size = 1048576
         str_signal_data = trim_response(signal_data)
+        session = requests.Session()
+        # Retry if connection issues occur or the service is returning a 5xx
+        retry = Retry(
+            total=10,
+            read=10,
+            connect=10,
+            backoff_factor=0.5,
+            status_forcelist=(500, 502, 503, 504)
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+
         if sigverb == 'PUT':
-            r = requests.put(sigurl, data=str_signal_data,
-                             headers={'content-type': 'application/json'})
+            r = session.put(sigurl, data=str_signal_data,
+                            headers={'content-type': 'application/json'})
         else:
-            r = requests.post(sigurl, data=str_signal_data,
-                              headers={'content-type': 'application/json'})
+            r = session.post(sigurl, data=str_signal_data,
+                             headers={'content-type': 'application/json'})
         log.debug('Response %s ' % r)
 
     if 'deploy_queue_id' in iv:

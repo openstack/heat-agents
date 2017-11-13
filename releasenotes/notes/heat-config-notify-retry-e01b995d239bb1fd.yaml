@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add retry logic if 500, 502, 503 or 504 responses are returned or network
+    connection issues occur during heat signals using http or https.
