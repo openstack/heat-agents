@@ -1,14 +1,13 @@
-=============================================
-Build image with software configuration hooks
-=============================================
+================================================
+Building an image with software deployment hooks
+================================================
 
-When building an image only the elements for the preferred configuration methods are required.
-The heat-config element is automatically included as a dependency.
+When building an image with `diskimage-builder`_ only the elements for the
+preferred configuration methods are required. The heat-config element is
+automatically included as a dependency.
 
-An example fedora based image containing some hooks can be built and uploaded to glance
-with the following:
-
-::
+An example fedora based image containing some hooks can be built and uploaded
+to glance with the following::
 
   sudo pip install git+https://git.openstack.org/openstack/diskimage-builder.git
   git clone https://git.openstack.org/openstack/tripleo-image-elements.git
@@ -30,3 +29,5 @@ with the following:
     -o fedora-software-config.qcow2
   openstack image create --disk-format qcow2 --container-format bare fedora-software-config < \
     fedora-software-config.qcow2
+
+.. _diskimage-builder: https://docs.openstack.org/diskimage-builder/latest/
