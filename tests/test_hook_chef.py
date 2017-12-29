@@ -96,8 +96,6 @@ class HookChefTest(common.RunScriptTest):
                     'fooval': {u'bar': u'baz'},
                     'run_list': [u'recipe[apache]']
                 }
-                exp_node = json.dumps(exp_node, indent=4,
-                                      separators=(',', ': '))
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"
                            "local_mode true\n"
@@ -111,7 +109,8 @@ class HookChefTest(common.RunScriptTest):
                            "node_path '/var/lib/heat-config/"
                            "heat-config-chef/node'")
                 mfdopen.return_value.write.assert_any_call(exp_cfg)
-                mfdopen.return_value.write.assert_any_call(exp_node)
+                args = mfdopen.return_value.write.mock_calls[0][1][0]
+                self.assertEqual(exp_node, json.loads(args))
         calls = [
             mock.call(['hostname', '-f'], env=mock.ANY, stderr=mock.ANY,
                       stdout=mock.ANY),
@@ -194,8 +193,6 @@ class HookChefTest(common.RunScriptTest):
                     'fooval': {u'bar': u'baz'},
                     'run_list': [u'recipe[apache]']
                 }
-                exp_node = json.dumps(exp_node, indent=4,
-                                      separators=(',', ': '))
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"
                            "local_mode true\n"
@@ -210,4 +207,5 @@ class HookChefTest(common.RunScriptTest):
                            "node_path '/var/lib/heat-config/"
                            "heat-config-chef/node'")
                 mfdopen.return_value.write.assert_any_call(exp_cfg)
-                mfdopen.return_value.write.assert_any_call(exp_node)
+                args = mfdopen.return_value.write.mock_calls[0][1][0]
+                self.assertEqual(exp_node, json.loads(args))
