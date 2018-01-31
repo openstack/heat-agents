@@ -1,23 +1,26 @@
-coverage>=4.0  # Apache-2.0
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+coverage!=4.4,>=4.0 # Apache-2.0
 discover
 dpath>=1.3.2
-fixtures>=3.0.0  # Apache-2.0/BSD
+fixtures>=3.0.0 # Apache-2.0/BSD
 # Hacking already pins down pep8, pyflakes and flake8
-hacking>=0.12.0,!=0.13.0,<0.14  # Apache-2.0
-mock>=2.0  # BSD
-openstackdocstheme>=1.11.0 # Apache-2.0
-paunch>=1.0.0  # Apache-2.0
+hacking!=0.13.0,<0.14,>=0.12.0 # Apache-2.0
+mock>=2.0.0 # BSD
+openstackdocstheme>=1.18.1 # Apache-2.0
+paunch>=1.0.0 # Apache-2.0
 reno>=2.5.0 # Apache-2.0
-requests>=2.10.0,!=2.12.2,!=2.13.0  # Apache-2.0
-requests-mock>=1.1  # Apache-2.0
+requests>=2.14.2 # Apache-2.0
+requests-mock>=1.1.0 # Apache-2.0
 salt
-sphinx>=1.6.2 # BSD
-testrepository>=0.0.18
-testscenarios>=0.4
-testtools>=1.4.0  # MIT
+sphinx!=1.6.6,>=1.6.2 # BSD
+testrepository>=0.0.18 # Apache-2.0/BSD
+testscenarios>=0.4 # Apache-2.0/BSD
+testtools>=2.2.0 # MIT
 yamllint>=1.2.0
-os-apply-config  # Apache-2.0
+os-apply-config>=5.0.0 # Apache-2.0
 
-python-heatclient>=1.6.1  # Apache-2.0
-python-keystoneclient>=3.8.0  # Apache-2.0
-python-openstackclient>=3.3.0  # Apache-2.0
+python-heatclient>=1.10.0 # Apache-2.0
+python-keystoneclient>=3.8.0 # Apache-2.0
+python-openstackclient>=3.12.0 # Apache-2.0
