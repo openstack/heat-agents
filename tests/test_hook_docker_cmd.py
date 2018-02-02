@@ -17,6 +17,7 @@ import os
 import tempfile
 
 import fixtures
+import six
 
 from tests import common
 
@@ -98,9 +99,9 @@ class HookDockerCmdTest(common.RunScriptTest):
             'heat-config-docker-cmd/',
             'os-refresh-config/configure.d/50-heat-config-docker-cmd')
 
-        self.fake_tool_path = self.relative_path(
+        self.fake_tool_path = six.text_type(self.relative_path(
             __file__,
-            'config-tool-fake.py')
+            'config-tool-fake.py'))
 
         self.working_dir = self.useFixture(fixtures.TempDir())
         self.outputs_dir = self.useFixture(fixtures.TempDir())
@@ -111,6 +112,76 @@ class HookDockerCmdTest(common.RunScriptTest):
             'HEAT_DOCKER_CMD': self.fake_tool_path,
             'TEST_STATE_PATH': self.test_state_path,
         })
+
+    def check_basic_response(self, state):
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'image',
+            u'--format',
+            u'exists',
+            u'xxx'
+        ], state[0]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'pull',
+            u'xxx'
+        ], state[1]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'image',
+            u'--format',
+            u'exists',
+            u'yyy'
+        ], state[2]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'pull',
+            u'yyy'
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=managed_by=docker-cmd',
+            u'--filter',
+            u'label=config_id=abc123',
+            u'--format',
+            u'{{.Names}} {{.Label "container_name"}}'
+        ], state[4]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=managed_by=docker-cmd',
+            u'--format',
+            u'{{.Names}} {{.Label "container_name"}}'
+        ], state[5]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=managed_by=docker-cmd',
+            u'--filter',
+            u'label=config_id=abc123',
+            u'--format',
+            u'{{.Names}} {{.Label "container_name"}}'
+        ], state[6]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
+            u'db'
+        ], state[7]['args'])
 
     def assert_args_and_labels(self, expected_args, expected_labels, observed):
         '''Assert the labels arguments separately to other arguments.
@@ -141,6 +212,14 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.env.update({
             'TEST_RESPONSE': json.dumps([
+                # inspect for image xxx
+                {},
+                # poll for image xxx
+                {},
+                # inspect for image yyy
+                {},
+                # poll for image yyy
+                {},
                 # ps for delete missing
                 {},
                 # ps for renames
@@ -174,114 +253,79 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout.decode('utf-8')))
 
-        state = list(self.json_from_files(self.test_state_path, 9))
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[0]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[1]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[2]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'db'
-        ], state[3]['args'])
+        state = list(self.json_from_files(self.test_state_path, 13))
+        self.check_basic_response(state)
         self.assert_args_and_labels([
             self.fake_tool_path,
-            'run',
-            '--name',
-            'db',
-            '--detach=true',
-            '--env-file=env.file',
-            '--env=foo=bar',
-            '--privileged=false',
-            'xxx'
-            ''
+            u'run',
+            u'--name',
+            u'db',
+            u'--detach=true',
+            u'--env-file=env.file',
+            u'--env=foo=bar',
+            u'--privileged=false',
+            u'xxx'
+            u''
         ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=db',
-            'managed_by=docker-cmd',
-        ], state[4]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'web',
-        ], state[5]['args'])
-        self.assert_args_and_labels([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            'web',
-            '--detach=true',
-            '--env-file=foo.env',
-            '--env-file=bar.conf',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
-            'yyy',
-            '/bin/webserver',
-            'start'
-        ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=web',
-            'managed_by=docker-cmd',
-        ], state[6]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=container_name=web',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}}',
-        ], state[7]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'exec',
-            'web',
-            '/bin/ls',
-            '-l'
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=db',
+            u'managed_by=docker-cmd',
         ], state[8]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
+            u'web',
+        ], state[9]['args'])
+        self.assert_args_and_labels([
+            self.fake_tool_path,
+            u'run',
+            u'--name',
+            u'web',
+            u'--detach=true',
+            u'--env-file=foo.env',
+            u'--env-file=bar.conf',
+            u'--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            u'--env=FOO=BAR',
+            u'--net=host',
+            u'--privileged=true',
+            u'--restart=always',
+            u'--user=root',
+            u'--volume=/run:/run',
+            u'--volume=db:/var/lib/db',
+            u'yyy',
+            u'/bin/webserver',
+            u'start'
+        ], [
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=web',
+            u'managed_by=docker-cmd',
+        ], state[10]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=container_name=web',
+            u'--filter',
+            u'label=config_id=abc123',
+            u'--format',
+            u'{{.Names}}',
+        ], state[11]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'exec',
+            u'web',
+            u'/bin/ls',
+            u'-l'
+        ], state[12]['args'])
 
     def test_hook_exit_codes(self):
 
@@ -365,6 +409,14 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.env.update({
             'TEST_RESPONSE': json.dumps([
+                # inspect for image xxx
+                {},
+                # poll for image xxx
+                {},
+                # inspect for image yyy
+                {},
+                # poll for image yyy
+                {},
                 # ps for delete missing
                 {},
                 # ps for renames
@@ -400,118 +452,91 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 2
         }, json.loads(stdout.decode('utf-8')))
 
-        state = list(self.json_from_files(self.test_state_path, 9))
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[0]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[1]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[2]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'db'
-        ], state[3]['args'])
+        state = list(self.json_from_files(self.test_state_path, 13))
+        self.check_basic_response(state)
         self.assert_args_and_labels([
             self.fake_tool_path,
-            'run',
-            '--name',
-            'db',
-            '--detach=true',
-            '--env-file=env.file',
-            '--env=foo=bar',
-            '--privileged=false',
-            'xxx'
-            ''
+            u'run',
+            u'--name',
+            u'db',
+            u'--detach=true',
+            u'--env-file=env.file',
+            u'--env=foo=bar',
+            u'--privileged=false',
+            u'xxx'
+            u''
         ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=db',
-            'managed_by=docker-cmd',
-        ], state[4]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'web',
-        ], state[5]['args'])
-        self.assert_args_and_labels([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            'web',
-            '--detach=true',
-            '--env-file=foo.env',
-            '--env-file=bar.conf',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
-            'yyy',
-            '/bin/webserver',
-            'start'
-        ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=web',
-            'managed_by=docker-cmd',
-        ], state[6]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=container_name=web',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}}',
-        ], state[7]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'exec',
-            'web',
-            '/bin/ls',
-            '-l'
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=db',
+            u'managed_by=docker-cmd',
         ], state[8]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
+            u'web',
+        ], state[9]['args'])
+        self.assert_args_and_labels([
+            self.fake_tool_path,
+            u'run',
+            u'--name',
+            u'web',
+            u'--detach=true',
+            u'--env-file=foo.env',
+            u'--env-file=bar.conf',
+            u'--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            u'--env=FOO=BAR',
+            u'--net=host',
+            u'--privileged=true',
+            u'--restart=always',
+            u'--user=root',
+            u'--volume=/run:/run',
+            u'--volume=db:/var/lib/db',
+            u'yyy',
+            u'/bin/webserver',
+            u'start'
+        ], [
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=web',
+            u'managed_by=docker-cmd',
+        ], state[10]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=container_name=web',
+            u'--filter',
+            u'label=config_id=abc123',
+            u'--format',
+            u'{{.Names}}',
+        ], state[11]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'exec',
+            u'web',
+            u'/bin/ls',
+            u'-l'
+        ], state[12]['args'])
 
     def test_hook_unique_names(self):
         self.env.update({
             'TEST_RESPONSE': json.dumps([
+                # inspect for image xxx
+                {},
+                # poll for image xxx
+                {},
+                # inspect for image yyy
+                {},
+                # poll for image yyy
+                {},
                 # ps for delete missing in this config id
                 {},
                 # ps for renames
@@ -546,139 +571,104 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.assertEqual(0, returncode, stderr)
 
-        self.assertEqual({
-            'deploy_stdout': '',
-            'deploy_stderr': 'Creating db...\n'
-                             'Creating web...\n'
-                             'one.txt\ntwo.txt\nthree.txt',
-            'deploy_status_code': 0
-        }, json.loads(stdout.decode('utf-8')))
+        state = list(self.json_from_files(self.test_state_path, 15))
+        dd = []
+        for i in state:
+            dd.append(i['args'])
 
-        state = list(self.json_from_files(self.test_state_path, 11))
-        db_container_name = state[4]['args'][4]
-        web_container_name = state[7]['args'][4]
+        db_container_name = state[8]['args'][6]
+        web_container_name = state[11]['args'][6]
         self.assertRegex(db_container_name, 'db-[0-9a-z]{8}')
         self.assertRegex(web_container_name, 'web-[0-9a-z]{8}')
+        self.check_basic_response(state)
         self.assertEqual([
             self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[0]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[1]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=managed_by=docker-cmd',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}} {{.Label "container_name"}}'
-        ], state[2]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'db'
-        ], state[3]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
             db_container_name,
-        ], state[4]['args'])
-        self.assert_args_and_labels([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            db_container_name,
-            '--detach=true',
-            '--env-file=env.file',
-            '--env=foo=bar',
-            '--privileged=false',
-            'xxx'
-        ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=db',
-            'managed_by=docker-cmd',
-        ], state[5]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            'web',
-        ], state[6]['args'])
-        self.assertEqual([
-            self.fake_tool_path,
-            'inspect',
-            '--format',
-            'exists',
-            web_container_name,
-        ], state[7]['args'])
-        self.assert_args_and_labels([
-            self.fake_tool_path,
-            'run',
-            '--name',
-            web_container_name,
-            '--detach=true',
-            '--env-file=foo.env',
-            '--env-file=bar.conf',
-            '--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
-            '--env=FOO=BAR',
-            '--net=host',
-            '--privileged=true',
-            '--restart=always',
-            '--user=root',
-            '--volume=/run:/run',
-            '--volume=db:/var/lib/db',
-            'yyy',
-            '/bin/webserver',
-            'start'
-        ], [
-            'deploy_stack_id=the_stack',
-            'deploy_resource_name=the_deployment',
-            'config_id=abc123',
-            'container_name=web',
-            'managed_by=docker-cmd',
         ], state[8]['args'])
-        self.assertEqual([
+        self.assert_args_and_labels([
             self.fake_tool_path,
-            'ps',
-            '-a',
-            '--filter',
-            'label=container_name=web',
-            '--filter',
-            'label=config_id=abc123',
-            '--format',
-            '{{.Names}}',
+            u'run',
+            u'--name',
+            db_container_name,
+            u'--detach=true',
+            u'--env-file=env.file',
+            u'--env=foo=bar',
+            u'--privileged=false',
+            u'xxx'
+        ], [
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=db',
+            u'managed_by=docker-cmd',
         ], state[9]['args'])
         self.assertEqual([
             self.fake_tool_path,
-            'exec',
-            'web-asdf1234',
-            '/bin/ls',
-            '-l'
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
+            u'web',
         ], state[10]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'inspect',
+            u'--type',
+            u'container',
+            u'--format',
+            u'exists',
+            web_container_name,
+        ], state[11]['args'])
+        self.assert_args_and_labels([
+            self.fake_tool_path,
+            u'run',
+            u'--name',
+            web_container_name,
+            u'--detach=true',
+            u'--env-file=foo.env',
+            u'--env-file=bar.conf',
+            u'--env=KOLLA_CONFIG_STRATEGY=COPY_ALWAYS',
+            u'--env=FOO=BAR',
+            u'--net=host',
+            u'--privileged=true',
+            u'--restart=always',
+            u'--user=root',
+            u'--volume=/run:/run',
+            u'--volume=db:/var/lib/db',
+            u'yyy',
+            u'/bin/webserver',
+            u'start'
+        ], [
+            u'deploy_stack_id=the_stack',
+            u'deploy_resource_name=the_deployment',
+            u'config_id=abc123',
+            u'container_name=web',
+            u'managed_by=docker-cmd',
+        ], state[12]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'ps',
+            u'-a',
+            u'--filter',
+            u'label=container_name=web',
+            u'--filter',
+            u'label=config_id=abc123',
+            u'--format',
+            u'{{.Names}}',
+        ], state[13]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            u'exec',
+            u'web-asdf1234',
+            u'/bin/ls',
+            u'-l'
+        ], state[14]['args'])
 
     def test_cleanup_deleted(self):
         self.env.update({
