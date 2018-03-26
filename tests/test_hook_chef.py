@@ -13,7 +13,6 @@
 
 import copy
 import imp
-import io
 import json
 import logging
 import mock
@@ -59,12 +58,8 @@ class HookChefTest(common.RunScriptTest):
             __file__,
             '..',
             'heat-config-chef/install.d/hook-chef.py')
-        if six.PY2:
-            sys.stdin = io.BytesIO()
-            sys.stdout = io.BytesIO()
-        else:
-            sys.stdin = io.StringIO()
-            sys.stdout = io.StringIO()
+        sys.stdin = six.StringIO()
+        sys.stdout = six.StringIO()
 
     def tearDown(self):
         super(HookChefTest, self).tearDown()
