@@ -86,7 +86,7 @@ class HookChefTest(common.RunScriptTest):
         sys.stdin.seek(0)
         mock_subproc = mock.Mock()
         mock_popen.return_value = mock_subproc
-        mock_subproc.communicate.return_value = ("out", "err")
+        mock_subproc.communicate.return_value = (b"out", b"err")
         mock_subproc.returncode = 0
         with mock.patch("os.fdopen", mock.mock_open()) as mfdopen:
             with mock.patch("os.open", mock.mock_open()):
@@ -138,7 +138,7 @@ class HookChefTest(common.RunScriptTest):
         sys.stdin.seek(0)
         mock_subproc = mock.Mock()
         mock_popen.return_value = mock_subproc
-        mock_subproc.communicate.return_value = ("out", "err")
+        mock_subproc.communicate.return_value = (b"out", b"err")
         mock_subproc.returncode = 0
         with mock.patch("os.fdopen", mock.mock_open()) as mfdopen:
             with mock.patch("os.open", mock.mock_open()):
@@ -183,7 +183,7 @@ class HookChefTest(common.RunScriptTest):
         sys.stdin.seek(0)
         mock_subproc = mock.Mock()
         mock_popen.return_value = mock_subproc
-        mock_subproc.communicate.return_value = ("out", "err")
+        mock_subproc.communicate.return_value = (b"out", b"err")
         mock_subproc.returncode = 0
         with mock.patch("os.fdopen", mock.mock_open()) as mfdopen:
             with mock.patch("os.open", mock.mock_open()):
