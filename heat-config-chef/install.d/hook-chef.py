@@ -101,20 +101,21 @@ def main(argv=sys.argv):
             log.error("Error cloning kitchen from %s into %s: %s", kitchen,
                       kitchen_path, err)
             json.dump({'deploy_status_code': ret,
-                       'deploy_stdout': out,
-                       'deploy_stderr': err},
+                       'deploy_stdout': out.decode('utf-8', 'replace'),
+                       'deploy_stderr': err.decode('utf-8', 'replace')},
                       sys.stdout)
             return 0
 
     # write the json attributes
     ret, out, err = run_subproc(['hostname', '-f'])
     if ret == 0:
-        fqdn = out.strip()
+        fqdn = out.decode('utf-8').strip()
     else:
         err = "Could not determine hostname with hostname -f"
         json.dump({'deploy_status_code': ret,
                    'deploy_stdout': "",
-                   'deploy_stderr': err}, sys.stdout)
+                   'deploy_stderr': err.decode('utf-8', 'replace')},
+                  sys.stdout)
         return 0
     node_config = {}
     for input in c['inputs']:
@@ -142,10 +143,10 @@ def main(argv=sys.argv):
     cmd = ['chef-client', '-z', '--config', config_path, "-j", node_file]
     ret, out, err = run_subproc(cmd, heat_outputs_path=heat_outputs_path)
     resp = {'deploy_status_code': ret,
-            'deploy_stdout': out,
-            'deploy_stderr': err}
+            'deploy_stdout': out.decode('utf-8', 'replace'),
+            'deploy_stderr': err.decode('utf-8', 'replace')}
     log.debug("Chef output: %s", out)
-    if err:
+    if ret != 0:
         log.error("Chef return code %s:\n%s", ret, err)
     for output in c.get('outputs', []):
         output_name = output['name']
