@@ -15,6 +15,7 @@ import copy
 import json
 import os
 import shutil
+import six
 import tempfile
 
 import fixtures
@@ -26,7 +27,7 @@ from tests import common
 class HeatConfigTest(common.RunScriptTest):
 
     fake_hooks = ['cfn-init', 'chef', 'puppet', 'salt', 'script',
-                  'apply-config', 'hiera', 'json-file']
+                  'apply-config', 'hiera', 'json-file', 'hook-raises']
 
     data = [
         {
@@ -85,6 +86,11 @@ class HeatConfigTest(common.RunScriptTest):
             'group': 'no-such-hook',
             'inputs': [],
             'config': 'nine'
+        }, {
+            'id': '0123',
+            'group': 'hook-raises',
+            'inputs': [],
+            'config': 'ten'
         }]
 
     outputs = {
@@ -128,6 +134,11 @@ class HeatConfigTest(common.RunScriptTest):
             'deploy_status_code': '0',
             'deploy_stderr': 'stderr',
             'deploy_stdout': 'stdout'
+        },
+        'hook-raises': {
+            'deploy_status_code': '1',
+            'deploy_stderr': 'OSError: Something bad happened!',
+            'deploy_stdout': ''
         }
     }
 
@@ -135,7 +146,8 @@ class HeatConfigTest(common.RunScriptTest):
         super(HeatConfigTest, self).setUp()
 
         self.fake_hook_path = self.relative_path(__file__, 'hook-fake.py')
-
+        self.fake_hook_raises_path = self.relative_path(__file__,
+                                                        'hook-fake-raises.py')
         self.heat_config_path = self.relative_path(
             __file__,
             '..',
@@ -147,11 +159,17 @@ class HeatConfigTest(common.RunScriptTest):
         with open(self.fake_hook_path) as f:
             fake_hook = f.read()
 
+        with open(self.fake_hook_raises_path) as f:
+            fake_hook_raises = f.read()
+
         for hook in self.fake_hooks:
             hook_name = self.hooks_dir.join(hook)
             with open(hook_name, 'w') as f:
                 os.utime(hook_name, None)
-                f.write(fake_hook)
+                if hook == 'hook-raises':
+                    f.write(fake_hook_raises)
+                else:
+                    f.write(fake_hook)
                 f.flush()
             os.chmod(hook_name, 0o755)
         self.env = os.environ.copy()
@@ -170,10 +188,7 @@ class HeatConfigTest(common.RunScriptTest):
                 'HEAT_CONFIG_DEPLOYED': self.deployed_dir.join(),
                 'HEAT_SHELL_CONFIG': config_file.name
             })
-            returncode, stdout, stderr = self.run_cmd(
-                [self.heat_config_path], self.env)
-
-            self.assertEqual(0, returncode, stderr)
+            return self.run_cmd([self.heat_config_path], self.env)
 
     def test_hooks_exist(self):
         self.assertThat(
@@ -186,13 +201,15 @@ class HeatConfigTest(common.RunScriptTest):
 
     def test_run_heat_config(self):
 
-        self.run_heat_config(self.data)
+        returncode, stdout, stderr = self.run_heat_config(self.data)
 
         for config in self.data:
             hook = config['group']
             stdin_path = self.hooks_dir.join('%s.stdin' % hook)
             stdout_path = self.hooks_dir.join('%s.stdout' % hook)
             deployed_file = self.deployed_dir.join('%s.json' % config['id'])
+            notify_file = self.deployed_dir.join('%s.notify.json' %
+                                                 config['id'])
 
             if hook == 'no-such-hook':
                 self.assertThat(
@@ -201,10 +218,8 @@ class HeatConfigTest(common.RunScriptTest):
                     stdout_path, matchers.Not(matchers.FileExists()))
                 continue
 
-            self.assertThat(stdin_path, matchers.FileExists())
-            self.assertThat(stdout_path, matchers.FileExists())
-
             # parsed stdin should match the config item
+            self.assertThat(stdin_path, matchers.FileExists())
             self.assertEqual(config,
                              self.json_from_file(stdin_path))
 
@@ -212,12 +227,24 @@ class HeatConfigTest(common.RunScriptTest):
             self.assertEqual(config,
                              self.json_from_file(deployed_file))
 
-            self.assertEqual(self.outputs[hook],
-                             self.json_from_file(stdout_path))
+            if hook != 'hook-raises':
+                self.assertEqual(self.outputs[hook],
+                                 self.json_from_file(notify_file))
+                self.assertEqual(self.outputs[hook],
+                                 self.json_from_file(stdout_path))
+                self.assertThat(stdout_path, matchers.FileExists())
+                os.remove(stdout_path)
+            else:
+                notify_data = self.json_from_file(notify_file)
+                self.assertEqual(
+                    self.outputs[hook]['deploy_status_code'],
+                    six.text_type(notify_data['deploy_status_code']))
+                self.assertIn(
+                    self.outputs[hook]['deploy_stderr'],
+                    notify_data['deploy_stderr'])
 
             # clean up files in preparation for second run
             os.remove(stdin_path)
-            os.remove(stdout_path)
 
         # run again with no changes, assert no new files
         self.run_heat_config(self.data)
@@ -261,7 +288,7 @@ class HeatConfigTest(common.RunScriptTest):
         self.run_heat_config(data)
         for config in self.data:
             hook = config['group']
-            if hook == 'no-such-hook':
+            if hook in ('no-such-hook', 'hook-raises'):
                 continue
             deployed_file = self.deployed_dir.join('%s.json' % config['id'])
             old_deployed_file = old_deployed_dir.join('%s.json' % config['id'])

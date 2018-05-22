@@ -155,6 +155,11 @@ def invoke_hook(c, log):
     if subproc.returncode:
         log.error("Error running %s. [%s]\n" % (
             hook_path, subproc.returncode))
+        signal_data = {
+            'deploy_stdout': stdout.decode("utf-8", "replace"),
+            'deploy_stderr': stderr.decode("utf-8", "replace"),
+            'deploy_status_code': subproc.returncode,
+        }
     else:
         log.info('Completed %s' % hook_path)
 
@@ -163,8 +168,8 @@ def invoke_hook(c, log):
             signal_data = json.loads(stdout.decode('utf-8', 'replace'))
     except ValueError:
         signal_data = {
-            'deploy_stdout': stdout,
-            'deploy_stderr': stderr,
+            'deploy_stdout': stdout.decode("utf-8", "replace"),
+            'deploy_stderr': stderr.decode("utf-8", "replace"),
             'deploy_status_code': subproc.returncode,
         }
 
