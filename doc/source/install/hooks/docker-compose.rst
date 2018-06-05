@@ -2,16 +2,15 @@
 docker-compose
 ==============
 
-A hook which uses `docker-compose` to deploy containers.
+A hook which uses ``docker-compose`` to deploy containers.
 
-A special input 'env_files' can be used with SoftwareConfig and
-StructuredConfig for docker-compose `env_file` key(s).
+A special input ``env_files`` can be used with SoftwareConfig and
+StructuredConfig for docker-compose env_file key(s). If any env_file
+keys specified in ``docker-compose.yml`` do not exist in the ``input_values``
+supplied, docker-compose will throw an error, as it can't find these files.
 
-if env_file keys specified in the `docker-compose.yml`, do not
-exist in input_values supplied, docker-compose will throw an
-error, as it can't find these files.
-
-Also, `--parameter-file` option can be used to pass env files from client.
+Also, the ``--parameter-file`` option can be used to pass env files from the
+client.
 
 Example::
 
