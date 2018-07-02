@@ -69,6 +69,9 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         }, {
             'name': 'deploy_resource_name',
             'value': 'the_resource'
+        }, {
+            'name': 'deploy_region_name',
+            'value': 'RegionOne'
         }],
         'config': 'five'
     }
@@ -241,7 +244,8 @@ class HeatConfigNotifyTest(common.RunScriptTest):
             password='password',
             project_id='bbbb')
         ks.service_catalog.url_for.assert_called_once_with(
-            service_type='orchestration', endpoint_type='publicURL')
+            service_type='orchestration', endpoint_type='publicURL',
+            region_name='RegionOne')
 
         heatclient.Client.assert_called_once_with(
             '1', 'mock://192.0.2.3/heat', token=ks.auth_token)
