@@ -112,8 +112,8 @@ html_theme = 'openstackdocs'
 
 # -- Options for openstackdocstheme --------------------------------------
 repository_name = 'openstack/heat-agents'
-bug_project = 'heat-agents'
-bug_tag = ''
+bug_project = '990'
+bug_tag = 'docs'
 
 # -- Options for HTMLHelp output ------------------------------------------
 
