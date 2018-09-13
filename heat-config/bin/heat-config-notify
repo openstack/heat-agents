@@ -97,7 +97,8 @@ def main(argv=sys.argv, stdin=sys.stdin):
         log.error(usage)
         return 1
 
-    c = json.load(open(conf_file))
+    with open(conf_file, mode='r') as f:
+        c = json.load(f)
 
     iv = dict((i['name'], i['value']) for i in c['inputs'])
 
