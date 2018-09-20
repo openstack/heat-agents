@@ -13,7 +13,6 @@
 #    under the License.
 
 import ast
-import dpath
 import json
 import logging
 import os
@@ -85,7 +84,8 @@ def main(argv=sys.argv):
     os.chdir(proj)
 
     compose_env_files = []
-    for value in dpath.util.values(config, '*/env_file'):
+    for c in config.values():
+        value = c.get('env_file', None)
         if isinstance(value, list):
             compose_env_files.extend(value)
         elif isinstance(value, six.string_types):
