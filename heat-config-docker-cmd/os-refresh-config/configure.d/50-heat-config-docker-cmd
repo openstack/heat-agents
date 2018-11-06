@@ -53,8 +53,8 @@ def main(argv=sys.argv):
 
     paunch.cleanup(
         cmd_config_ids,
-        managed_by='docker-cmd',
-        docker_cmd=DOCKER_CMD
+        'docker-cmd',
+        DOCKER_CMD
     )
 
 

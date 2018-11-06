@@ -76,9 +76,9 @@ def main(argv=sys.argv):
     stdout, stderr, deploy_status_code = paunch.apply(
         cid,
         config,
-        managed_by='docker-cmd',
-        labels=labels,
-        docker_cmd=DOCKER_CMD
+        'docker-cmd',
+        labels,
+        DOCKER_CMD
     )
 
     json.dump(build_response(

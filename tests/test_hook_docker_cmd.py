@@ -234,6 +234,8 @@ class HookDockerCmdTest(common.RunScriptTest):
                 {},
                 # docker run web
                 {'stderr': 'Creating web...'},
+                # inspect
+                {},
                 # name lookup for exec web
                 {'stdout': 'web'},
                 # docker exec web
@@ -253,7 +255,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout.decode('utf-8')))
 
-        state = list(self.json_from_files(self.test_state_path, 13))
+        state = list(self.json_from_files(self.test_state_path, 14))
         self.check_basic_response(state)
         self.assert_args_and_labels([
             self.fake_tool_path,
@@ -310,6 +312,15 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state[10]['args'])
         self.assertEqual([
             self.fake_tool_path,
+            'inspect',
+            '--type',
+            'container',
+            '--format',
+            'exists',
+            'web-ls'
+        ], state[11]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
             u'ps',
             u'-a',
             u'--filter',
@@ -318,14 +329,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'label=config_id=abc123',
             u'--format',
             u'{{.Names}}',
-        ], state[11]['args'])
+        ], state[12]['args'])
         self.assertEqual([
             self.fake_tool_path,
             u'exec',
             u'web',
             u'/bin/ls',
             u'-l'
-        ], state[12]['args'])
+        ], state[13]['args'])
 
     def test_hook_exit_codes(self):
 
@@ -336,6 +347,7 @@ class HookDockerCmdTest(common.RunScriptTest):
                 # ps for renames
                 {},
                 # ps for currently running containers
+                {},
                 {},
                 {'stdout': 'web'},
                 {
@@ -354,7 +366,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 0
         }, json.loads(stdout.decode('utf-8')))
 
-        state = list(self.json_from_files(self.test_state_path, 5))
+        state = list(self.json_from_files(self.test_state_path, 6))
         self.assertEqual([
             self.fake_tool_path,
             'ps',
@@ -388,6 +400,15 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
+            'inspect',
+            '--type',
+            'container',
+            '--format',
+            'exists',
+            'web-ls'
+        ], state[3]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
             'ps',
             '-a',
             '--filter',
@@ -396,14 +417,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             'label=config_id=abc123',
             '--format',
             '{{.Names}}',
-        ], state[3]['args'])
+        ], state[4]['args'])
         self.assertEqual([
             self.fake_tool_path,
             'exec',
             'web',
             '/bin/ls',
             '-l'
-        ], state[4]['args'])
+        ], state[5]['args'])
 
     def test_hook_failed(self):
 
@@ -431,6 +452,8 @@ class HookDockerCmdTest(common.RunScriptTest):
                 {},
                 # docker run web
                 {'stderr': 'Creating web...'},
+                # inspect
+                {},
                 # name lookup for exec web
                 {'stdout': 'web'},
                 # docker exec web fails
@@ -452,7 +475,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             'deploy_status_code': 2
         }, json.loads(stdout.decode('utf-8')))
 
-        state = list(self.json_from_files(self.test_state_path, 13))
+        state = list(self.json_from_files(self.test_state_path, 14))
         self.check_basic_response(state)
         self.assert_args_and_labels([
             self.fake_tool_path,
@@ -509,6 +532,15 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state[10]['args'])
         self.assertEqual([
             self.fake_tool_path,
+            'inspect',
+            '--type',
+            'container',
+            '--format',
+            'exists',
+            'web-ls'
+        ], state[11]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
             u'ps',
             u'-a',
             u'--filter',
@@ -517,14 +549,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'label=config_id=abc123',
             u'--format',
             u'{{.Names}}',
-        ], state[11]['args'])
+        ], state[12]['args'])
         self.assertEqual([
             self.fake_tool_path,
             u'exec',
             u'web',
             u'/bin/ls',
             u'-l'
-        ], state[12]['args'])
+        ], state[13]['args'])
 
     def test_hook_unique_names(self):
         self.env.update({
@@ -571,7 +603,7 @@ class HookDockerCmdTest(common.RunScriptTest):
 
         self.assertEqual(0, returncode, stderr)
 
-        state = list(self.json_from_files(self.test_state_path, 15))
+        state = list(self.json_from_files(self.test_state_path, 17))
         dd = []
         for i in state:
             dd.append(i['args'])
@@ -653,6 +685,24 @@ class HookDockerCmdTest(common.RunScriptTest):
         ], state[12]['args'])
         self.assertEqual([
             self.fake_tool_path,
+            'inspect',
+            '--type',
+            'container',
+            '--format',
+            'exists',
+            'web-ls'
+        ], state[13]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
+            'inspect',
+            '--type',
+            'container',
+            '--format',
+            'exists',
+            state[14]['args'][6]
+        ], state[14]['args'])
+        self.assertEqual([
+            self.fake_tool_path,
             u'ps',
             u'-a',
             u'--filter',
@@ -661,14 +711,14 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'label=config_id=abc123',
             u'--format',
             u'{{.Names}}',
-        ], state[13]['args'])
+        ], state[15]['args'])
         self.assertEqual([
             self.fake_tool_path,
             u'exec',
-            u'web-asdf1234',
+            u'web',
             u'/bin/ls',
             u'-l'
-        ], state[14]['args'])
+        ], state[16]['args'])
 
     def test_cleanup_deleted(self):
         self.env.update({
