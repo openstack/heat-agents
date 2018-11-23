@@ -17,6 +17,6 @@ accumulated metadata, not just data supplied to an individual hook.
 To use this hook set the ``group`` property to `apply-config` instead of
 `os-apply-config` in your Heat software configuration resources.
 
-.. _os-apply-config: https://git.openstackorg/cgit/openstack/os-apply-config
-.. _tripleo-image-elements: https://git.openstackorg/cgit/openstack/tripleo-image-elements
-.. _os-refresh-config: https://git.openstackorg/cgit/openstack/os-refresh-config
+.. _os-apply-config: https://git.openstack.org/cgit/openstack/os-apply-config
+.. _tripleo-image-elements: https://git.openstack.org/cgit/openstack/tripleo-image-elements
+.. _os-refresh-config: https://git.openstack.org/cgit/openstack/os-refresh-config
