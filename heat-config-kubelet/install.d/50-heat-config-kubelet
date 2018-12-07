@@ -73,10 +73,80 @@ EOF
     systemctl enable heat-config-kubelet-nat-rule.service
     systemctl disable firewalld
 
-SCRIPTDIR=$(dirname $0)
-install -D -g root -o root -m 0755 ${SCRIPTDIR}/hook-kubelet.py /var/lib/heat-config/hooks/kubelet
+elif [[ "ubuntu" =~ "$DISTRO_NAME" ]]; then
+    apt-get update
+    apt-get install -y apt-transport-https gnupg
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
+    cat << EOF > /etc/apt/sources.list.d/kubernetes.list
+deb http://apt.kubernetes.io/ kubernetes-$(lsb_release -cs) main
+EOF
+    apt-get update
+    apt-get install -y kubelet kubeadm kubectl kubernetes-cni bridge-utils docker.io
+
+    cat << EOF > /etc/network/interfaces.d/cbr0.cfg
+auto cbr0
+iface cbr0 inet static
+bridge_ports none
+bridge_stp on
+bridge_waitport 2
+bridge_fd 2
+address 10.240.1.1
+netmask 255.255.255.0
+mtu 1450
+post-up /bin/ip route add 10.240.0.0/16 dev cbr0 scope link src 10.240.1.1
+EOF
+
+# defer docker starting until cbr0 is up
+cat > /etc/systemd/system/docker.service <<EOF
+.include /lib/systemd/system/docker.service
+[Unit]
+After=network-online.target docker.socket
+EOF
+
+    cat > /etc/systemd/system/heat-config-kubelet-nat-rule.service <<EOF
+[Unit]
+Description=iptables rule to allow nat masquerading out of 10.240.1.0/24
+
+[Service]
+ExecStart=/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 10.240.1.0/24 -j MASQUERADE
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+if [ -f "/opt/heat-docker/images.tar" ]; then
+    cat > /etc/systemd/system/heat-config-kubelet-load-images.service <<EOF
+[Unit]
+Description=Call docker load on /opt/heat-config/images.tar
+After=docker.service
+Before=os-collect-config.service kubelet.service
+
+[Service]
+ExecStart=/usr/bin/docker load -i /opt/heat-docker/images.tar
+ExecStart=/bin/rm -f /opt/heat-docker/images.tar
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable heat-config-kubelet-load-images.service
+fi
+
+    cat << EOF > /etc/docker/daemon.json
+{ "bridge": "cbr0", "mtu": 1450, "iptables": false, "insecure-registries": ["192.168.20.112:5001"] }
+EOF
+
+    sed -e 's|KUBELET_EXTRA_ARGS=|KUBELET_EXTRA_ARGS="--config=/var/lib/heat-config/heat-config-kubelet/kubelet-manifests"|g' -i /etc/default/kubelet
+    systemctl disable docker.service
+    systemctl enable docker.service
+    systemctl enable kubelet.service
+    systemctl enable heat-config-kubelet-nat-rule.service
 
 else
     echo "Distribution '$DISTRO_NAME' is not supported"
     exit 1
 fi
+
+SCRIPTDIR=$(dirname $0)
+install -D -g root -o root -m 0755 ${SCRIPTDIR}/hook-kubelet.py /var/lib/heat-config/hooks/kubelet
