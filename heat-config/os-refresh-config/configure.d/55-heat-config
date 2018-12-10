@@ -21,6 +21,7 @@ import subprocess
 import sys
 
 import six
+import yaml
 
 # legacy groups that have never had a hook script
 WHITELISTED_MISSING_HOOK_SCRIPTS = ['os-apply-config']
@@ -89,6 +90,19 @@ def find_hook_path(group):
             return hook_path
 
 
+def humanize(data):
+    # reformat a json string with multi-line values into a human readable yaml
+    # dump. if conversion fails, it will fallback to original string.
+    try:
+        return yaml.safe_dump(data,
+            allow_unicode=True,
+            default_flow_style=False,
+            canonical=False,
+            default_style="|")
+    except Exception:
+        return data
+
+
 def invoke_hook(c, log):
     # Sanitize input values (bug 1333992). Convert all String
     # inputs to strings if they're not already
@@ -151,7 +165,7 @@ def invoke_hook(c, log):
     stdout, stderr = subproc.communicate(
         input=json.dumps(c).encode('utf-8', 'replace'))
 
-    log.info(stdout)
+    log.info(humanize(stdout))
     log.debug(stderr)
 
     if subproc.returncode:
