@@ -98,7 +98,7 @@ def main(argv=sys.argv):
             for i in ast.literal_eval(input_values.get('env_files')))
 
     for file in compose_env_files:
-        if file in input_env_files.keys():
+        if file in input_env_files:
             write_input_file(file, input_env_files.get(file))
 
     cmd = [
