@@ -18,10 +18,12 @@ import tempfile
 
 import fixtures
 import six
+from testtools import testcase
 
 from tests import common
 
 
+@testcase.skip('Skipped until story/2004926 fixed')
 class HookDockerCmdTest(common.RunScriptTest):
     data = {
         "name": "abcdef001",
