@@ -34,7 +34,7 @@ def main(argv=sys.argv):
 
     c = json.load(sys.stdin)['config']
 
-    for fname in c.keys():
+    for fname in c:
         prepare_dir(os.path.dirname(fname))
         data = c.get(fname)
         with open(fname, 'w') as json_data_file:
