@@ -18,12 +18,10 @@ import tempfile
 
 import fixtures
 import six
-from testtools import testcase
 
 from tests import common
 
 
-@testcase.skip('Skipped until story/2004926 fixed')
 class HookDockerCmdTest(common.RunScriptTest):
     data = {
         "name": "abcdef001",
@@ -153,7 +151,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'--filter',
             u'label=config_id=abc123',
             u'--format',
-            u'{{.Names}} {{.Label "container_name"}}'
+            u'{{.Names}} {{.Labels.container_name}}'
         ], state[4]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -162,7 +160,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'--filter',
             u'label=managed_by=docker-cmd',
             u'--format',
-            u'{{.Names}} {{.Label "container_name"}}'
+            u'{{.Names}} {{.Labels.container_name}}'
         ], state[5]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -173,7 +171,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             u'--filter',
             u'label=config_id=abc123',
             u'--format',
-            u'{{.Names}} {{.Label "container_name"}}'
+            u'{{.Names}} {{.Labels.container_name}}'
         ], state[6]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -378,7 +376,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=config_id=abc123',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -387,7 +385,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -398,7 +396,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=config_id=abc123',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[2]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -751,7 +749,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Label "config_id"}}'
+            '{{.Labels.config_id}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -760,7 +758,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[1]['args'])
 
         self.env.update({
@@ -802,7 +800,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Label "config_id"}}'
+            '{{.Labels.config_id}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -839,7 +837,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[5]['args'])
 
     def test_cleanup_changed(self):
@@ -873,7 +871,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Label "config_id"}}'
+            '{{.Labels.config_id}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -882,7 +880,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[1]['args'])
 
         # run again with changed config data
@@ -926,7 +924,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Label "config_id"}}'
+            '{{.Labels.config_id}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -963,7 +961,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[5]['args'])
 
     def test_cleanup_rename(self):
@@ -997,7 +995,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Label "config_id"}}'
+            '{{.Labels.config_id}}'
         ], state[0]['args'])
         self.assertEqual([
             self.fake_tool_path,
@@ -1006,7 +1004,7 @@ class HookDockerCmdTest(common.RunScriptTest):
             '--filter',
             'label=managed_by=docker-cmd',
             '--format',
-            '{{.Names}} {{.Label "container_name"}}'
+            '{{.Names}} {{.Labels.container_name}}'
         ], state[1]['args'])
         self.assertEqual([
             self.fake_tool_path,
