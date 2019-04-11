@@ -6,6 +6,7 @@ Heat Agents Release Notes
    :caption: Contents:
 
    unreleased
+   stein
    rocky
    queens
 
