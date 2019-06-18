@@ -1,4 +1,31 @@
 #!/bin/bash
 set -eux
 
+# For centos and suse there is the need to get rid
+# of the distutils installed files from some packages.
+# Detailed explanation: see diskimage-builder
+# diskimage_builder/elements/pip-and-virtualenv/install.d/pip-and-virtualenv-source-install/04-install-pip
+
+PACKAGES_TO_BE_CLEARED="PyYAML python-ipaddress"
+
+clear_old_files=0
+case "$DISTRO_NAME" in
+    centos*|rhel*)
+        clear_old_files=1
+        ;;
+    opensuse)
+        case "$DIB_RELEASE" in
+            42*)
+                clear_old_files=1
+                ;;
+        esac
+        ;;
+esac
+
+if [[ ${clear_old_files} -eq 1 ]]; then
+    for pkg in ${PACKAGES_TO_BE_CLEARED}; do
+        rpm -ql $pkg | xargs rm -rf
+    done
+fi
+
 pip install python-heatclient python-zaqarclient python-keystoneclient
