@@ -35,23 +35,23 @@ def build_response(deploy_stdout, deploy_stderr, deploy_status_code):
     }
 
 
-def main(argv=sys.argv):
+def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
     global log
     log = logging.getLogger('heat-config')
-    handler = logging.StreamHandler(sys.stderr)
+    handler = logging.StreamHandler(stderr)
     handler.setFormatter(
         logging.Formatter(
             '[%(asctime)s] (%(name)s) [%(levelname)s] %(message)s'))
     log.addHandler(handler)
     log.setLevel('DEBUG')
 
-    c = json.load(sys.stdin)
+    c = json.load(stdin)
 
     input_values = dict((i['name'], i['value']) for i in c.get('inputs', {}))
 
     if input_values.get('deploy_action') == 'DELETE':
         json.dump(build_response(
-            '', '', 0), sys.stdout)
+            '', '', 0), stdout)
         return
 
     config = c.get('config', '')
@@ -59,11 +59,9 @@ def main(argv=sys.argv):
     if not config:
         log.debug("No 'config' input found, nothing to do.")
         json.dump(build_response(
-            '', '', 0), sys.stdout)
+            '', '', 0), stdout)
         return
 
-    stdout = []
-    stderr = []
     deploy_status_code = 0
 
     # convert config to dict
@@ -73,7 +71,7 @@ def main(argv=sys.argv):
     labels = collections.OrderedDict()
     labels['deploy_stack_id'] = input_values.get('deploy_stack_id')
     labels['deploy_resource_name'] = input_values.get('deploy_resource_name')
-    stdout, stderr, deploy_status_code = paunch.apply(
+    apply_stdout, apply_stderr, deploy_status_code = paunch.apply(
         cid,
         config,
         'docker-cmd',
@@ -82,7 +80,9 @@ def main(argv=sys.argv):
     )
 
     json.dump(build_response(
-        '\n'.join(stdout), '\n'.join(stderr), deploy_status_code), sys.stdout)
+        '\n'.join(apply_stdout),
+        '\n'.join(apply_stderr),
+        deploy_status_code), stdout)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
