@@ -16,10 +16,10 @@ supplied configuration data, and return any outputs back to Heat.
 
 .. _Heat: https://docs.openstack.org/heat/latest
 .. _diskimage-builder: https://docs.openstack.org/diskimage-builder/latest/
-.. _tripleo-image-elements: https://git.openstack.org/cgit/openstack/tripleo-image-elements
-.. _os-collect-config: https://git.openstack.org/cgit/openstack/os-collect-config
-.. _os-refresh-config: https://git.openstack.org/cgit/openstack/os-refresh-config
-.. _os-apply-config: https://git.openstack.org/cgit/openstack/os-apply-config
+.. _tripleo-image-elements: https://opendev.org/openstack/tripleo-image-elements
+.. _os-collect-config: https://opendev.org/openstack/os-collect-config
+.. _os-refresh-config: https://opendev.org/openstack/os-refresh-config
+.. _os-apply-config: https://opendev.org/openstack/os-apply-config
 
 .. toctree::
    :maxdepth: 3

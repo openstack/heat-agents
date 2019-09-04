@@ -9,9 +9,9 @@ automatically included as a dependency.
 An example fedora based image containing some hooks can be built and uploaded
 to glance with the following::
 
-  sudo pip install git+https://git.openstack.org/openstack/diskimage-builder.git
-  git clone https://git.openstack.org/openstack/tripleo-image-elements.git
-  git clone https://git.openstack.org/openstack/heat-agents.git
+  sudo pip install git+https://opendev.org/openstack/diskimage-builder
+  git clone https://opendev.org/openstack/tripleo-image-elements
+  git clone https://opendev.org/openstack/heat-agents
   export ELEMENTS_PATH=tripleo-image-elements/elements:heat-agents/
   disk-image-create vm \
     fedora selinux-permissive \
