@@ -55,6 +55,10 @@ def main(argv=sys.argv):
     skip_tags = c['options'].get('skip_tags')
     modulepath = c['options'].get('modulepath')
     callback_plugins = c['options'].get('callback_plugins')
+    inventory = c['options'].get('inventory')
+    if inventory:
+        global ANSIBLE_INVENTORY
+        ANSIBLE_INVENTORY = os.path.join(WORKING_DIR, inventory)
 
     fn = os.path.join(WORKING_DIR, '%s_playbook.yaml' % c['id'])
     vars_filename = os.path.join(WORKING_DIR, '%s_variables.json' % c['id'])
