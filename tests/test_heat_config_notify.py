@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import json
 import tempfile
 
@@ -211,7 +212,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
             data='{}',
             headers={'content-type': 'application/json'})
 
-    def test_notify_heat_signal(self):
+    def _do_test_notify_heat_signal(self, data_heat_signal, expected_region):
         ksclient = mock.MagicMock()
         hcn.ksclient = ksclient
         ks = mock.MagicMock()
@@ -229,7 +230,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         ks.service_catalog.url_for.return_value = 'mock://192.0.2.3/heat'
         heat.resources.signal.return_value = 'all good'
 
-        with self.write_config_file(self.data_heat_signal) as config_file:
+        with self.write_config_file(data_heat_signal) as config_file:
             self.assertEqual(
                 0,
                 hcn.main(['heat-config-notify', config_file.name], self.stdin))
@@ -241,7 +242,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
             project_id='bbbb')
         ks.service_catalog.url_for.assert_called_once_with(
             service_type='orchestration', endpoint_type='publicURL',
-            region_name='RegionOne')
+            region_name=expected_region)
 
         heatclient.Client.assert_called_once_with(
             '1', 'mock://192.0.2.3/heat', token=ks.auth_token)
@@ -249,3 +250,16 @@ class HeatConfigNotifyTest(common.RunScriptTest):
             'cccc',
             'the_resource',
             data={'foo': 'bar'})
+
+    def test_notify_heat_signal(self):
+        self._do_test_notify_heat_signal(self.data_heat_signal, 'RegionOne')
+
+    def test_notify_heat_signal_no_region(self):
+        data_heat_signal = copy.deepcopy(self.data_heat_signal)
+        del data_heat_signal['inputs'][-1]  # Remove region_name input
+        self._do_test_notify_heat_signal(data_heat_signal, None)
+
+    def test_notify_heat_signal_unknown_region(self):
+        data_heat_signal = copy.deepcopy(self.data_heat_signal)
+        data_heat_signal['inputs'][-1]['value'] = None
+        self._do_test_notify_heat_signal(data_heat_signal, None)
