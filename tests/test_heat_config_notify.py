@@ -16,8 +16,8 @@ import json
 import tempfile
 
 import fixtures
-import mock
 import six
+from unittest import mock
 
 from tests import common
 from tests import heat_config_notify as hcn

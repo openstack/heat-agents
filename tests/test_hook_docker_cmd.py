@@ -13,8 +13,8 @@
 
 import json
 
-import mock
 from six.moves import cStringIO as StringIO
+from unittest import mock
 
 from tests import common
 from tests import hook_docker_cmd

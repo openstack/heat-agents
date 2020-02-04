@@ -12,9 +12,9 @@
 #    under the License.
 
 
-import mock
 import re
 import testtools
+from unittest import mock
 
 from tests import hook_kubelet
 

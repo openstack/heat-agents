@@ -15,9 +15,9 @@ import copy
 import imp
 import json
 import logging
-import mock
 import six
 import sys
+from unittest import mock
 
 from tests import common
 
