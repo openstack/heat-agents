@@ -84,5 +84,6 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
         '\n'.join(apply_stderr),
         deploy_status_code), stdout)
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

@@ -124,5 +124,6 @@ def main(argv=sys.argv):
 
     json.dump(build_response(stdout, stderr, subproc.returncode), sys.stdout)
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

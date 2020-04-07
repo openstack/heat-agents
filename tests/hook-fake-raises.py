@@ -37,5 +37,6 @@ def main(argv=sys.argv):
         f.flush()
     raise OSError("Something bad happened!")
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

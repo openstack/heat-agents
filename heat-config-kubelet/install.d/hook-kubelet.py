@@ -54,7 +54,7 @@ def id_to_pod_name_part(config_id):
 
 
 def container_pattern(config_id, container_name):
-    return '^/k8s_%s\.[0-9a-z]{8}_%s' % (
+    return r'^/k8s_%s\.[0-9a-z]{8}_%s' % (
         container_name, id_to_pod_name_part(config_id))
 
 

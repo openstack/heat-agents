@@ -56,5 +56,6 @@ def main(argv=sys.argv):
         f.flush()
     json.dump(response, sys.stdout)
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

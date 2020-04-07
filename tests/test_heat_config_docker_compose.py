@@ -111,6 +111,6 @@ class HeatConfigDockerComposeORCTest(common.RunScriptTest):
             compose_yml = self.docker_compose_dir.join(
                 'abcdef001/docker-compose.yml')
             with open(compose_yml) as f:
-                    self.assertEqual(yaml.safe_dump(
-                        self.data[0].get('config'),
-                        default_flow_style=False), f.read())
+                self.assertEqual(yaml.safe_dump(
+                    self.data[0].get('config'),
+                    default_flow_style=False), f.read())
