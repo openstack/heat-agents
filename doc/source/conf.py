@@ -82,7 +82,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -111,9 +111,9 @@ html_theme = 'openstackdocs'
 # html_sidebars = {}
 
 # -- Options for openstackdocstheme --------------------------------------
-repository_name = 'openstack/heat-agents'
-bug_project = '990'
-bug_tag = 'docs'
+openstackdocs_repo_name = 'openstack/heat-agents'
+openstackdocs_auto_name = False
+openstackdocs_use_storyboard = True
 
 # -- Options for HTMLHelp output ------------------------------------------
 
