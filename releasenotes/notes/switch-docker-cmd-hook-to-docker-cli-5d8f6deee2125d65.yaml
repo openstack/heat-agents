@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    paunch is retired, hance we now switch docker-cmd hook to use docker
+    client. Aware that when upgrade to current version of heat-agents hooks,
+    the dependency for docker-cmd hook will change accordingly.
