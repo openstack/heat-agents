@@ -15,7 +15,6 @@ import copy
 import json
 import os
 import shutil
-import six
 import tempfile
 
 import fixtures
@@ -238,7 +237,7 @@ class HeatConfigTest(common.RunScriptTest):
                 notify_data = self.json_from_file(notify_file)
                 self.assertEqual(
                     self.outputs[hook]['deploy_status_code'],
-                    six.text_type(notify_data['deploy_status_code']))
+                    str(notify_data['deploy_status_code']))
                 self.assertIn(
                     self.outputs[hook]['deploy_stderr'],
                     notify_data['deploy_stderr'])

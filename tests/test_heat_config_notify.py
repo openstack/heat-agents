@@ -12,11 +12,11 @@
 #    under the License.
 
 import copy
+import io
 import json
 import tempfile
 
 import fixtures
-import six
 from unittest import mock
 
 from tests import common
@@ -80,7 +80,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
         super(HeatConfigNotifyTest, self).setUp()
         self.deployed_dir = self.useFixture(fixtures.TempDir())
         hcn.init_logging = mock.MagicMock()
-        self.stdin = six.StringIO()
+        self.stdin = io.StringIO()
 
     def write_config_file(self, data):
         config_file = tempfile.NamedTemporaryFile(mode='w')

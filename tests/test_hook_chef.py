@@ -13,9 +13,9 @@
 
 import copy
 import importlib
+import io
 import json
 import logging
-import six
 import sys
 
 from multiprocessing import Lock
@@ -69,8 +69,8 @@ class HookChefTest(common.RunScriptTest):
             __file__,
             '..',
             'heat-config-chef/install.d/hook-chef.py')
-        sys.stdin = six.StringIO()
-        sys.stdout = six.StringIO()
+        sys.stdin = io.StringIO()
+        sys.stdout = io.StringIO()
 
     def tearDown(self):
         super(HookChefTest, self).tearDown()

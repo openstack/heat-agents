@@ -16,7 +16,6 @@ import json
 import logging
 import os
 import shutil
-import six
 import subprocess
 import sys
 
@@ -41,7 +40,7 @@ def prepare_dir(path):
 def run_subproc(fn, **kwargs):
     env = os.environ.copy()
     for k, v in kwargs.items():
-        env[six.text_type(k)] = v
+        env[str(k)] = v
     try:
         subproc = subprocess.Popen(fn, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
@@ -49,7 +48,7 @@ def run_subproc(fn, **kwargs):
         stdout, stderr = subproc.communicate()
     except OSError as exc:
         ret = -1
-        stderr = six.text_type(exc)
+        stderr = str(exc)
         stdout = ""
     else:
         ret = subproc.returncode

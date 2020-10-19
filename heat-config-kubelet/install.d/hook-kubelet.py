@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import json
 import logging
 import os
 import re
-import six
 import sys
 import time
 
@@ -81,13 +81,13 @@ def configure_logging():
     handler.setFormatter(formatter)
     log.addHandler(handler)
 
-    deploy_stdout = six.StringIO()
+    deploy_stdout = io.StringIO()
     handler = logging.StreamHandler(deploy_stdout)
     handler.setFormatter(formatter)
     handler.setLevel('DEBUG')
     log.addHandler(handler)
 
-    deploy_stderr = six.StringIO()
+    deploy_stderr = io.StringIO()
     handler = logging.StreamHandler(deploy_stderr)
     handler.setFormatter(formatter)
     handler.setLevel('WARN')
@@ -149,7 +149,7 @@ def wait_required_containers(client, log,
     waiting_for = dict((v, re.compile(v)) for v in patterns)
     while waiting_for:
         for name in containers_names(client.containers()):
-            for k, v in six.iteritems(waiting_for):
+            for k, v in waiting_for.items():
                 if v.match(name):
                     log.info('Pattern %s matches: %s' % (k, name))
                     del(waiting_for[k])

@@ -16,7 +16,6 @@ import ast
 import json
 import logging
 import os
-import six
 import subprocess
 import sys
 import yaml
@@ -88,7 +87,7 @@ def main(argv=sys.argv):
         value = c.get('env_file', None)
         if isinstance(value, list):
             compose_env_files.extend(value)
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             compose_env_files.extend([value])
 
     input_env_files = {}
