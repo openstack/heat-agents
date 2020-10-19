@@ -12,16 +12,27 @@
 #    under the License.
 
 import copy
-import imp
+import importlib
 import json
 import logging
 import six
 import sys
+
+from multiprocessing import Lock
 from unittest import mock
 
 from tests import common
 
 log = logging.getLogger('test_hook_chef')
+
+
+def load_module(name, path):
+    module_spec = importlib.util.spec_from_file_location(
+        name, path
+    )
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
 
 
 @mock.patch("os.chdir")
@@ -67,11 +78,12 @@ class HookChefTest(common.RunScriptTest):
         sys.stdout = sys.__stdout__
 
     def get_module(self):
+        lock = Lock()
         try:
-            imp.acquire_lock()
-            return imp.load_source("hook_chef", self.hook_path)
+            lock.acquire()
+            return load_module("hook_chef", self.hook_path)
         finally:
-            imp.release_lock()
+            lock.release()
 
     def test_hook(self, mock_popen, mock_mkdirs, mock_chdir):
         data = copy.deepcopy(self.data)
