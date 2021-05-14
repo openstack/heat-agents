@@ -25,3 +25,13 @@ supplied configuration data, and return any outputs back to Heat.
    :maxdepth: 3
 
    install/index
+
+For Contributors
+================
+
+* If you are a new contributor to heat-agents please refer: :doc:`contributor/contributing`
+
+  .. toctree::
+     :hidden:
+
+     contributor/contributing
