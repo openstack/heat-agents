@@ -64,9 +64,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Heat Agent Release Note'
-copyright = u'2017, Heat Developers'
-author = u'Heat Developers'
+project = 'Heat Agent Release Note'
+copyright = '2017, Heat Developers'
+author = 'Heat Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -148,8 +148,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'HeatAgentReleaseNote.tex',
-     u'Heat Agent Release Note Documentation',
-     u'Heat Developers', 'manual'),
+     'Heat Agent Release Note Documentation',
+     'Heat Developers', 'manual'),
 ]
 
 
@@ -159,7 +159,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'heatagentreleasenote',
-     u'Heat Agent Release Note Documentation',
+     'Heat Agent Release Note Documentation',
      [author], 1)
 ]
 
@@ -171,7 +171,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'HeatAgentReleaseNote',
-     u'Heat Agent Release Note Documentation',
+     'Heat Agent Release Note Documentation',
      author, 'HeatAgentReleaseNote', 'One line description of project.',
      'Miscellaneous'),
 ]
