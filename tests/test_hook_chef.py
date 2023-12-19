@@ -100,8 +100,8 @@ class HookChefTest(common.RunScriptTest):
                 hook_chef.main(json.dumps(data))
                 exp_node = {
                     'barval': {'foo': 'biff'},
-                    'fooval': {u'bar': u'baz'},
-                    'run_list': [u'recipe[apache]']
+                    'fooval': {'bar': 'baz'},
+                    'run_list': ['recipe[apache]']
                 }
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"
@@ -197,8 +197,8 @@ class HookChefTest(common.RunScriptTest):
                 hook_chef.main(json.dumps(data))
                 exp_node = {
                     'barval': {'foo': 'biff'},
-                    'fooval': {u'bar': u'baz'},
-                    'run_list': [u'recipe[apache]']
+                    'fooval': {'bar': 'baz'},
+                    'run_list': ['recipe[apache]']
                 }
                 exp_cfg = ("log_level :debug\n"
                            "log_location STDOUT\n"

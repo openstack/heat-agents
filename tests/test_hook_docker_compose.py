@@ -26,12 +26,12 @@ class HookDockerComposeTest(common.RunScriptTest):
         "inputs": [
             {
                 "name": "env_files",
-                "value": u'[ { "file_name": "./common.env", '
-                         u'"content": "xxxxx" }, '
-                         u'{ "file_name": "./test.env", '
-                         u'"content": "yyyy" }, '
-                         u'{ "file_name": "./test1.env", '
-                         u'"content": "zzz" } ]'
+                "value": '[ { "file_name": "./common.env", '
+                         '"content": "xxxxx" }, '
+                         '{ "file_name": "./test.env", '
+                         '"content": "yyyy" }, '
+                         '{ "file_name": "./test1.env", '
+                         '"content": "zzz" } ]'
             }
         ],
         "config": {
