@@ -152,7 +152,7 @@ def wait_required_containers(client, log,
             for k, v in waiting_for.items():
                 if v.match(name):
                     log.info('Pattern %s matches: %s' % (k, name))
-                    del(waiting_for[k])
+                    del waiting_for[k]
                     break
         if time.time() > timeout:
             raise Exception('Timed out after %s seconds waiting for '

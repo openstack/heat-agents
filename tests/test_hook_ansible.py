@@ -139,7 +139,7 @@ class HookAnsibleTest(common.RunScriptTest):
                                 '--skip-tags', 'abc,def'])
 
     def test_hook_with_callback_plugins(self):
-        self.assertTrue('ANSIBLE_CALLBACK_PLUGINS' not in self.env)
+        self.assertNotIn('ANSIBLE_CALLBACK_PLUGINS', self.env)
 
         state = self._hook_run(data=self.data_callback_plugins)
         opt = self.data_callback_plugins['options']['callback_plugins']
