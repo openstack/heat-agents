@@ -129,16 +129,16 @@ def invoke_hook(c, log):
                     found = True
                     break
         if not found:
-            log.warn('Skipping group %s, no valid script is defined'
-                     ' for deploy action %s' % (group, action))
+            log.warning('Skipping group %s, no valid script is defined'
+                        ' for deploy action %s' % (group, action))
             return
 
     # check to see if this config is already deployed
     deployed_path = os.path.join(DEPLOYED_DIR, '%s.json' % c['id'])
 
     if os.path.exists(deployed_path):
-        log.warn('Skipping config %s, already deployed' % c['id'])
-        log.warn('To force-deploy, rm %s' % deployed_path)
+        log.warning('Skipping config %s, already deployed' % c['id'])
+        log.warning('To force-deploy, rm %s' % deployed_path)
         return
 
     signal_data = {}

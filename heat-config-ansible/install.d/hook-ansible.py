@@ -67,7 +67,7 @@ def main(argv=sys.argv):
 
     config_text = c.get('config', '')
     if not config_text:
-        log.warn("No 'config' input found, nothing to do.")
+        log.warning("No 'config' input found, nothing to do.")
         return
     # Write 'variables' to file
     with os.fdopen(os.open(
@@ -106,7 +106,7 @@ def main(argv=sys.argv):
         subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=env)
     except OSError:
-        log.warn("ansible not installed yet")
+        log.warning("ansible not installed yet")
         return
     stdout, stderr = subproc.communicate()
 

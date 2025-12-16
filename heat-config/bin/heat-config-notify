@@ -88,7 +88,7 @@ def main(argv=sys.argv, stdin=sys.stdin):
     try:
         signal_data = json.load(stdin)
     except ValueError:
-        log.warn('No valid json found on stdin')
+        log.warning('No valid json found on stdin')
         signal_data = {}
 
     conf_file = argv[1]

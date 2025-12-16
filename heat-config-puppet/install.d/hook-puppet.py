@@ -43,7 +43,7 @@ def get_hostname_f(log):
     if subproc.returncode == 0:
         return out.strip()
     else:
-        log.warn("Failed to retrieve 'hostname -f' output")
+        log.warning("Failed to retrieve 'hostname -f' output")
         return None
 
 
@@ -142,7 +142,7 @@ def main(argv=sys.argv):
         )
         subproc.wait()
     except OSError:
-        log.warn('puppet not installed yet')
+        log.warning('puppet not installed yet')
         return
     finally:
         stdout_log.close()
