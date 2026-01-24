@@ -1,7 +1,5 @@
 coverage>=4.0 # Apache-2.0
 fixtures>=3.0.0 # Apache-2.0/BSD
-# Hacking already pins down pep8, pyflakes and flake8
-hacking>=6.1.0,<6.2.0 # Apache-2.0
 requests>=2.14.2 # Apache-2.0
 requests-mock>=1.1.0 # Apache-2.0
 salt>=3001.1  # Apache-2.0

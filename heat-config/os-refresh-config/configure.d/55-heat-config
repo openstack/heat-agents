@@ -57,7 +57,8 @@ def main(argv=sys.argv):
         os.chmod(CONF_FILE, 0o600)
 
     if not os.path.isdir(DEPLOYED_DIR):
-        if DEPLOYED_DIR != OLD_DEPLOYED_DIR and os.path.isdir(OLD_DEPLOYED_DIR):
+        if (DEPLOYED_DIR != OLD_DEPLOYED_DIR and
+                os.path.isdir(OLD_DEPLOYED_DIR)):
             log.debug('Migrating deployed state from %s to %s' %
                       (OLD_DEPLOYED_DIR, DEPLOYED_DIR))
             shutil.move(OLD_DEPLOYED_DIR, DEPLOYED_DIR)
@@ -93,7 +94,8 @@ def humanize(data):
     # reformat a json string with multi-line values into a human readable yaml
     # dump. if conversion fails, it will fallback to original string.
     try:
-        return yaml.safe_dump(data,
+        return yaml.safe_dump(
+            data,
             allow_unicode=True,
             default_flow_style=False,
             canonical=False,

@@ -16,10 +16,7 @@ import glob
 import json
 import logging
 import os
-import subprocess
 import sys
-
-import requests
 
 MANIFESTS_DIR = os.environ.get('HEAT_KUBELET_MANIFESTS',
                                '/var/lib/heat-config/heat-config-kubelet'
@@ -67,6 +64,7 @@ def write_manifest(c):
     fn = os.path.join(MANIFESTS_DIR, '%s.json' % c['id'])
     with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
         json.dump(c['config'], f, indent=2, separators=(',', ': '))
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
