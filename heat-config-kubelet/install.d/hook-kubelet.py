@@ -42,10 +42,10 @@ DEFAULT_POLL_PERIOD = 5
 def get_client(log):
     kwargs = {}
     kwargs['base_url'] = DOCKER_BASE_URL
-    log.debug('Connecting to %s' % DOCKER_BASE_URL)
+    log.debug('Connecting to %s', DOCKER_BASE_URL)
     client = docker.Client(**kwargs)
     client._version = client.version()['ApiVersion']
-    log.debug('Connected to version %s' % client._version)
+    log.debug('Connected to version %s', client._version)
     return client
 
 
@@ -54,20 +54,20 @@ def id_to_pod_name_part(config_id):
 
 
 def container_pattern(config_id, container_name):
-    return r'^/k8s_%s\.[0-9a-z]{8}_%s' % (
+    return r'^/k8s_{}\.[0-9a-z]{{8}}_{}'.format(
         container_name, id_to_pod_name_part(config_id))
 
 
 def required_images(c):
     containers = c['config'].get('containers', [])
-    return set(container['image'] for container in containers)
+    return {container['image'] for container in containers}
 
 
 def required_container_patterns(c):
     config_id = c['id']
     containers = c['config'].get('containers', [])
-    return dict((container['name'], container_pattern(
-        config_id, container['name'])) for container in containers)
+    return {container['name']: container_pattern(
+        config_id, container['name']) for container in containers}
 
 
 def configure_logging():
@@ -97,8 +97,7 @@ def configure_logging():
 
 
 def wait_required_images(client, log, images_timeout, poll_period, images):
-    log.info(
-        'Waiting for images: %s' % ', '.join(images))
+    log.info('Waiting for images: %s', images)
     timeout = time.time() + images_timeout
 
     def image_prefixes(images):
@@ -112,15 +111,14 @@ def wait_required_images(client, log, images_timeout, poll_period, images):
 
     def image_names(all_images):
         for image in all_images:
-            for name in image['RepoTags']:
-                yield name
+            yield from image['RepoTags']
 
     while matching_prefixes:
         all_images = list(image_names(client.images()))
         for image_prefix in matching_prefixes:
             for image in all_images:
                 if image.startswith(image_prefix):
-                    log.info('Found image: %s' % image)
+                    log.info('Found image: %s', image)
                     matching_prefixes.remove(image_prefix)
 
         if time.time() > timeout:
@@ -136,22 +134,20 @@ def wait_required_containers(client, log,
                              containers_timeout, poll_period,
                              container_patterns):
     patterns = container_patterns.values()
-    log.info(
-        'Waiting for containers matching: %s' % ', '.join(patterns))
+    log.info('Waiting for containers matching: %s', patterns)
 
     timeout = time.time() + containers_timeout
 
     def containers_names(containers):
         for container in containers:
-            for name in container['Names']:
-                yield name
+            yield from container['Names']
 
-    waiting_for = dict((v, re.compile(v)) for v in patterns)
+    waiting_for = {v: re.compile(v) for v in patterns}
     while waiting_for:
         for name in containers_names(client.containers()):
             for k, v in waiting_for.items():
                 if v.match(name):
-                    log.info('Pattern %s matches: %s' % (k, name))
+                    log.info('Pattern %s matches: %s', k, name)
                     del waiting_for[k]
                     break
         if time.time() > timeout:
@@ -195,7 +191,7 @@ def main(argv=sys.argv, sys_stdin=sys.stdin, sys_stdout=sys.stdout):
 
     except Exception as ex:
         pod_state = 1
-        log.error('An error occurred deploying pod %s' % c['id'])
+        log.error('An error occurred deploying pod %s', c['id'])
         log.exception(ex)
 
     response = {

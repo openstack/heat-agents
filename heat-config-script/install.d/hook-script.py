@@ -52,7 +52,7 @@ def main(argv=sys.argv):
             env[input_name] = json.dumps(value)
         else:
             env[input_name] = value
-        log.info('%s=%s' % (input_name, env[input_name]))
+        log.info('%s=%s', input_name, env[input_name])
 
     fn = os.path.join(WORKING_DIR, c['id'])
     heat_outputs_path = os.path.join(OUTPUTS_DIR, c['id'])
@@ -61,7 +61,7 @@ def main(argv=sys.argv):
     with os.fdopen(os.open(fn, os.O_CREAT | os.O_WRONLY, 0o700), 'w') as f:
         f.write(c.get('config', ''))
 
-    log.debug('Running %s' % fn)
+    log.debug('Running %s', fn)
     subproc = subprocess.Popen([fn], stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, env=env)
     stdout, stderr = subproc.communicate()
@@ -70,18 +70,18 @@ def main(argv=sys.argv):
     log.debug(stderr)
 
     if subproc.returncode:
-        log.error("Error running %s. [%s]\n" % (fn, subproc.returncode))
+        log.error("Error running %s. [%s]\n", fn, subproc.returncode)
     else:
-        log.info('Completed %s' % fn)
+        log.info('Completed %s', fn)
 
     response = {}
 
     for output in c.get('outputs') or []:
         output_name = output['name']
         try:
-            with open('%s.%s' % (heat_outputs_path, output_name)) as out:
+            with open(f'{heat_outputs_path}.{output_name}') as out:
                 response[output_name] = out.read()
-        except IOError:
+        except OSError:
             pass
 
     response.update({

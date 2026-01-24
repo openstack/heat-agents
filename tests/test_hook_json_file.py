@@ -27,7 +27,7 @@ log = logging.getLogger('test_hook_json_file')
 class HookJsonFileConfigTest(common.RunScriptTest):
 
     def setUp(self):
-        super(HookJsonFileConfigTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

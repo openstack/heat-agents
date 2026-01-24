@@ -63,7 +63,7 @@ class HookSaltTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookSaltTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

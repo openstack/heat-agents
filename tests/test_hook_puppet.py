@@ -45,7 +45,7 @@ class HookPuppetTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookPuppetTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

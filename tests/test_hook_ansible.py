@@ -80,7 +80,7 @@ class HookAnsibleTest(common.RunScriptTest):
     })
 
     def setUp(self):
-        super(HookAnsibleTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

@@ -64,7 +64,7 @@ class HookChefTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookChefTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',
@@ -73,7 +73,7 @@ class HookChefTest(common.RunScriptTest):
         sys.stdout = io.StringIO()
 
     def tearDown(self):
-        super(HookChefTest, self).tearDown()
+        super().tearDown()
         sys.stdin = sys.__stdin__
         sys.stdout = sys.__stdout__
 

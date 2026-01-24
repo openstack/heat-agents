@@ -74,7 +74,7 @@ def main(argv=sys.argv):
 
     caller = salt.cli.caller.Caller.factory(opts)
 
-    log.debug('Applying Salt state %s' % state_file)
+    log.debug('Applying Salt state %s', state_file)
 
     stdout, stderr = None, None
     ret = {}
@@ -83,17 +83,17 @@ def main(argv=sys.argv):
         ret = caller.call()
     except exceptions.SaltInvocationError as err:
         log.error(
-            'Salt invocation error while applying Salt sate %s' % state_file)
+            'Salt invocation error while applying Salt sate %s', state_file)
         stderr = err
 
     if ret:
 
-        log.info('Results: %s' % ret)
+        log.info('Results: %s', ret)
         output = yaml.safe_dump(ret['return'])
 
         # returncode of 0 means there were successful changes
         if ret['retcode'] == 0:
-            log.info('Completed applying salt state %s' % state_file)
+            log.info('Completed applying salt state %s', state_file)
             stdout = output
         else:
             # Salt doesn't always return sane return codes so we have to check
@@ -104,8 +104,8 @@ def main(argv=sys.argv):
                     runfailed = True
                     break
             if runfailed:
-                log.error('Error applying Salt state %s. [%s]\n'
-                          % (state_file, ret['retcode']))
+                log.error('Error applying Salt state %s. [%s]\n',
+                          state_file, ret['retcode'])
                 stderr = output
             else:
                 ret['retcode'] = 0

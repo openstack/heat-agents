@@ -59,7 +59,7 @@ def main(argv=sys.argv):
 
     c = json.load(sys.stdin)
 
-    input_values = dict((i['name'], i['value']) for i in c['inputs'])
+    input_values = {i['name']: i['value'] for i in c['inputs']}
 
     proj = os.path.join(WORKING_DIR, c.get('name'))
     prepare_dir(proj)
@@ -92,9 +92,9 @@ def main(argv=sys.argv):
 
     input_env_files = {}
     if input_values.get('env_files'):
-        input_env_files = dict(
-            (i['file_name'], i['content'])
-            for i in ast.literal_eval(input_values.get('env_files')))
+        input_env_files = {
+            i['file_name']: i['content']
+            for i in ast.literal_eval(input_values.get('env_files'))}
 
     for file in compose_env_files:
         if file in input_env_files:
@@ -107,7 +107,7 @@ def main(argv=sys.argv):
         '--no-build',
     ]
 
-    log.debug('Running %s' % cmd)
+    log.debug('Running %s', cmd)
 
     subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
@@ -117,9 +117,9 @@ def main(argv=sys.argv):
     log.debug(stderr)
 
     if subproc.returncode:
-        log.error("Error running %s. [%s]\n" % (cmd, subproc.returncode))
+        log.error("Error running %s. [%s}]\n", cmd, subproc.returncode)
     else:
-        log.debug('Completed %s' % cmd)
+        log.debug('Completed %s', cmd)
 
     json.dump(build_response(stdout, stderr, subproc.returncode), sys.stdout)
 

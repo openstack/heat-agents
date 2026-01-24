@@ -25,8 +25,7 @@ LAST_METADATA_DIR = os.environ.get('HEAT_CFN_INIT_LAST_METADATA_DIR',
                                    '/var/cache/heat-cfntools')
 
 
-CFN_INIT_CMD = os.environ.get('HEAT_CFN_INIT_CMD',
-                              'cfn-init')
+CFN_INIT_CMD = os.environ.get('HEAT_CFN_INIT_CMD', 'cfn-init')
 
 
 def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
@@ -53,7 +52,7 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
                    'w') as f:
         json.dump(meta, f)
 
-    log.debug('Running %s' % CFN_INIT_CMD)
+    log.debug('Running %s', CFN_INIT_CMD)
     subproc = subprocess.Popen([CFN_INIT_CMD], stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     cstdout, cstderr = subproc.communicate()
@@ -64,10 +63,9 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
         log.info(cstderr)
 
     if subproc.returncode:
-        log.error("Error running %s. [%s]\n" % (
-            CFN_INIT_CMD, subproc.returncode))
+        log.error("Error running %s. [%s]\n", CFN_INIT_CMD, subproc.returncode)
     else:
-        log.info('Completed %s' % CFN_INIT_CMD)
+        log.info('Completed %s', CFN_INIT_CMD)
 
     response = {
         'deploy_stdout': cstdout.decode('utf-8', 'replace'),

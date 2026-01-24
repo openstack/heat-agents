@@ -35,7 +35,7 @@ def main(argv=sys.argv):
     suffix = 0
     while os.path.isfile(state_path):
         suffix += 1
-        state_path = '%s_%s' % (os.environ.get('TEST_STATE_PATH'), suffix)
+        state_path = '{}_{}'.format(os.environ.get('TEST_STATE_PATH'), suffix)
 
     with open(state_path, 'w') as f:
         json.dump({'env': dict(os.environ), 'args': argv}, f)

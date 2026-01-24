@@ -93,7 +93,7 @@ def command_argument(cmd, command):
 
 
 def execute(cmd):
-    log.debug("execute command: %s" % cmd)
+    log.debug("execute command: %s", cmd)
     subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     cmd_stdout, cmd_stderr = subproc.communicate()
@@ -132,7 +132,7 @@ def inspect(container, format=None):
         else:
             return json.loads(cmd_stdout)[0]
     except Exception as e:
-        log.error('Problem parsing docker inspect: %s' % e)
+        log.error('Problem parsing docker inspect: %s', e)
 
 
 def unique_container_name(container):
@@ -140,7 +140,7 @@ def unique_container_name(container):
     while inspect(container_name, format='exists'):
         suffix = ''.join(random.choice(
             string.ascii_lowercase + string.digits) for i in range(8))
-        container_name = '%s-%s' % (container, suffix)
+        container_name = f'{container}-{suffix}'
     return container_name
 
 
@@ -179,7 +179,7 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
 
     c = json.load(stdin)
 
-    input_values = dict((i['name'], i['value']) for i in c.get('inputs', {}))
+    input_values = {i['name']: i['value'] for i in c.get('inputs', {})}
 
     if input_values.get('deploy_action') == 'DELETE':
         json.dump(build_response(
@@ -203,7 +203,7 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
     def key_fltr(key):
         return config[key].get('start_order', 0)
     for container in sorted(config, key=key_fltr):
-        log.debug("Running container: %s" % container)
+        log.debug("Running container: %s", container)
         action = config[container].get('action', 'run')
         exit_codes = config[container].get('exit_codes', [0])
 
@@ -231,10 +231,10 @@ def main(argv=sys.argv, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
             cmd_stderrs.append(err_str)
 
         if returncode not in exit_codes:
-            log.error("Error running %s. [%s]\n" % (cmd, returncode))
+            log.error("Error running %s. [%s]\n", cmd, returncode)
             deploy_status_code = returncode
         else:
-            log.debug('Completed %s' % cmd)
+            log.debug('Completed %s', cmd)
     json.dump(build_response('\n'.join(cmd_stdouts), '\n'.join(cmd_stderrs),
               deploy_status_code), sys.stdout)
 

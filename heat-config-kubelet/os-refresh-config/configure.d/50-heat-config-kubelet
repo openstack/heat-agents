@@ -35,7 +35,7 @@ def main(argv=sys.argv):
     log.setLevel('DEBUG')
 
     if not os.path.exists(CONF_FILE):
-        log.error('No config file %s' % CONF_FILE)
+        log.error('No config file %s', CONF_FILE)
         return 1
 
     if not os.path.isdir(MANIFESTS_DIR):

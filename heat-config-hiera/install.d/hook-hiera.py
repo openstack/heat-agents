@@ -33,9 +33,9 @@ HIERA_CONFIG_BASE = """
 :backends:
   - json
 :json:
-  :datadir: %(datadir)s
+  :datadir: {datadir}
 :hierarchy:
-""" % {'datadir': HIERA_DATADIR}
+""".format(datadir=HIERA_DATADIR)
 
 
 def prepare_dir(path):

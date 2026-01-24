@@ -101,7 +101,7 @@ def main(argv=sys.argv):
             'ANSIBLE_CALLBACK_PLUGINS': callback_plugins
         })
 
-    log.debug('Running %s' % (' '.join(cmd),))
+    log.debug('Running %s', cmd)
     try:
         subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=env)
@@ -119,18 +119,18 @@ def main(argv=sys.argv):
     # TODO(stevebaker): Test if ansible returns any non-zero
     # return codes in success.
     if subproc.returncode:
-        log.error("Error running %s. [%s]\n" % (fn, subproc.returncode))
+        log.error("Error running %s. [%s]\n", fn, subproc.returncode)
     else:
-        log.info('Completed %s' % fn)
+        log.info('Completed %s', fn)
 
     response = {}
 
     for output in c.get('outputs') or []:
         output_name = output['name']
         try:
-            with open('%s.%s' % (heat_outputs_path, output_name)) as out:
+            with open(f'{heat_outputs_path}.{output_name}') as out:
                 response[output_name] = out.read()
-        except IOError:
+        except OSError:
             pass
 
     response.update({
