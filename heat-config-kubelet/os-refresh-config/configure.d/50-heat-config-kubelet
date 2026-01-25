@@ -41,7 +41,7 @@ def main(argv=sys.argv):
     if not os.path.isdir(MANIFESTS_DIR):
         os.makedirs(MANIFESTS_DIR, 0o700)
 
-    for f in glob.glob('%s/*.json'):
+    for f in glob.glob('%s/*.json' % MANIFESTS_DIR):
         os.remove(f)
 
     try:
