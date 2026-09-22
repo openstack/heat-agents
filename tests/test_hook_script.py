@@ -22,7 +22,7 @@ from tests import common
 class HookScriptTest(common.RunScriptTest):
 
     def setUp(self):
-        super(HookScriptTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

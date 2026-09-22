@@ -150,9 +150,9 @@ def main(argv=sys.argv):
     for output in c.get('outputs', []):
         output_name = output['name']
         try:
-            with open('%s.%s' % (heat_outputs_path, output_name)) as out:
+            with open(f'{heat_outputs_path}.{output_name}') as out:
                 resp[output_name] = out.read()
-        except IOError:
+        except OSError:
             pass
     json.dump(resp, sys.stdout)
 

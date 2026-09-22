@@ -77,7 +77,7 @@ class HeatConfigNotifyTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HeatConfigNotifyTest, self).setUp()
+        super().setUp()
         self.deployed_dir = self.useFixture(fixtures.TempDir())
         hcn.init_logging = mock.MagicMock()
         self.stdin = io.StringIO()

@@ -39,13 +39,13 @@ def main(argv=sys.argv):
     log.setLevel('DEBUG')
 
     if not os.path.exists(CONF_FILE):
-        log.warning('No config file %s' % CONF_FILE)
+        log.warning('No config file %s', CONF_FILE)
         return 0
 
     try:
         configs = json.load(open(CONF_FILE))
     except ValueError as e:
-        log.warning('Could not load config json: %s' % e)
+        log.warning('Could not load config json: %s', e)
         return 0
 
     cmd_config_ids = [c['id'] for c in configs
@@ -66,12 +66,12 @@ def delete_missing_configs(config_ids):
         if type(conf_id) is bytes:
             conf_id = conf_id.decode('utf-8')
         if conf_id not in config_ids:
-            log.debug('%s no longer exists, deleting containers' % conf_id)
+            log.debug('%s no longer exists, deleting containers', conf_id)
             remove_containers(conf_id)
 
 
 def execute(cmd):
-    log.debug("execute command: %s" % cmd)
+    log.debug("execute command: %s", cmd)
     subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     cmd_stdout, cmd_stderr = subproc.communicate()
@@ -107,7 +107,7 @@ def remove_container(container):
     cmd = [DOCKER_CMD, 'rm', '-f', container]
     cmd_stdout, cmd_stderr, returncode = execute(cmd)
     if returncode != 0:
-        log.error('Error removing container: %s' % container)
+        log.error('Error removing container: %s', container)
         log.error(cmd_stderr)
 
 
@@ -142,8 +142,8 @@ def rename_containers():
 
     for current, desired in sorted(need_renaming.items()):
         if desired in current_containers:
-            log.info('Cannot rename "%s" since "%s" still exists' % (
-                current, desired))
+            log.info('Cannot rename "%s" since "%s" still exists',
+                     current, desired)
         else:
             cmd = [DOCKER_CMD, 'rename', current, desired]
             execute(cmd)

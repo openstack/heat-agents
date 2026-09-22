@@ -32,7 +32,7 @@ def main(argv=sys.argv):
 
     env = os.environ.copy()
 
-    log.debug('Running %s' % APPLY_CONFIG_CMD)
+    log.debug('Running %s', APPLY_CONFIG_CMD)
     subproc = subprocess.Popen([APPLY_CONFIG_CMD], stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, env=env)
     stdout, stderr = subproc.communicate()
@@ -41,7 +41,7 @@ def main(argv=sys.argv):
     log.debug(stderr)
 
     if subproc.returncode:
-        log.error("Error running apply-config: [%s]\n" % subproc.returncode)
+        log.error("Error running apply-config: [%s]\n", subproc.returncode)
     else:
         log.info('Completed apply-config.')
 

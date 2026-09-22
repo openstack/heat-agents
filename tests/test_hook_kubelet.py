@@ -56,7 +56,7 @@ class HookKubeletTest(testtools.TestCase):
     }
 
     def setUp(self):
-        super(HookKubeletTest, self).setUp()
+        super().setUp()
         docker = mock.MagicMock()
         self.docker_client = mock.MagicMock()
         docker.Client.return_value = self.docker_client
@@ -97,9 +97,9 @@ class HookKubeletTest(testtools.TestCase):
 
     def test_required_images(self):
         self.assertEqual(
-            set([
+            {
                 'kollaglue/fedora-rdo-heat-engine',
-                'kollaglue/fedora-rdo-rabbitmq']),
+                'kollaglue/fedora-rdo-rabbitmq'},
             hook_kubelet.required_images(self.config))
 
         self.assertEqual(

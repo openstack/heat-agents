@@ -48,7 +48,7 @@ class HookHieraTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookHieraTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

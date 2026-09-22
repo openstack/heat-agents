@@ -142,7 +142,7 @@ class HeatConfigTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HeatConfigTest, self).setUp()
+        super().setUp()
 
         self.fake_hook_path = self.relative_path(__file__, 'hook-fake.py')
         self.fake_hook_raises_path = self.relative_path(__file__,

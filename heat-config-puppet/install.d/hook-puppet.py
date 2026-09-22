@@ -99,7 +99,7 @@ def main(argv=sys.argv):
     heat_outputs_path = os.path.join(OUTPUTS_DIR, c['id'])
     facts['FACTER_heat_outputs_path'] = heat_outputs_path
 
-    env_debug = ' '.join('%s="%s" ' % (k, v) for k, v in facts.items())
+    env_debug = ' '.join(f'{k}="{v}" ' for k, v in facts.items())
 
     env = os.environ.copy()
     env.update(facts)
@@ -131,11 +131,11 @@ def main(argv=sys.argv):
     prepare_dir(PUPPET_LOGDIR)
     timestamp = re.sub('[:T]', '-', c['creation_time'])
     base_path = os.path.join(
-        PUPPET_LOGDIR, '{timestamp}-{c[id]}'.format(**locals())
+        PUPPET_LOGDIR, f'{timestamp}-{c["id"]}'
     )
-    stdout_log = open('{0}-stdout.log'.format(base_path), 'w')
-    stderr_log = open('{0}-stderr.log'.format(base_path), 'w')
-    log.debug('Running %s %s' % (env_debug, ' '.join(cmd)))
+    stdout_log = open(f'{base_path}-stdout.log', 'w')
+    stderr_log = open(f'{base_path}-stderr.log', 'w')
+    log.debug('Running %s %s', env_debug, cmd)
     try:
         subproc = subprocess.Popen(
             cmd, stdout=stdout_log, stderr=stderr_log, env=env
@@ -148,29 +148,29 @@ def main(argv=sys.argv):
         stdout_log.close()
         stderr_log.close()
 
-    log.info('Return code %s' % subproc.returncode)
+    log.info('Return code %s', subproc.returncode)
     response = {}
     for i in 'stdout', 'stderr':
-        with open('{0}-{1}.log'.format(base_path, i)) as logfile:
+        with open(f'{base_path}-{i}.log') as logfile:
             content = logfile.read()
         if content.strip():
             log.info(content)
-        response['deploy_{0}'.format(i)] = content
+        response[f'deploy_{i}'] = content
 
     # returncode of 2 means there were successful changes
     if subproc.returncode in (0, 2):
         returncode = 0
-        log.info('Completed %s' % fn)
+        log.info('Completed %s', fn)
     else:
         returncode = subproc.returncode
-        log.error("Error running %s. [%s]\n" % (fn, subproc.returncode))
+        log.error("Error running %s. [%s]\n", fn, returncode)
 
     for output in c.get('outputs') or []:
         output_name = output['name']
         try:
-            with open('%s.%s' % (heat_outputs_path, output_name)) as out:
+            with open(f'{heat_outputs_path}.{output_name}') as out:
                 response[output_name] = out.read()
-        except IOError:
+        except OSError:
             pass
 
     response.update({

@@ -33,7 +33,7 @@ class HookApplyConfigTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookApplyConfigTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

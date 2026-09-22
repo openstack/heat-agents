@@ -69,7 +69,7 @@ class HookDockerComposeTest(common.RunScriptTest):
     }
 
     def setUp(self):
-        super(HookDockerComposeTest, self).setUp()
+        super().setUp()
         self.hook_path = self.relative_path(
             __file__,
             '..',

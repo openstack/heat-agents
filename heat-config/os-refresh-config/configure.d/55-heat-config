@@ -49,7 +49,7 @@ def main(argv=sys.argv):
     log.setLevel('DEBUG')
 
     if not os.path.exists(CONF_FILE):
-        log.error('No config file %s' % CONF_FILE)
+        log.error('No config file %s', CONF_FILE)
         return 1
 
     conf_mode = stat.S_IMODE(os.lstat(CONF_FILE).st_mode)
@@ -112,7 +112,7 @@ def invoke_hook(c, log):
         if hot_input.get('type', None) == 'String' and \
                 not isinstance(hot_input['value'], str):
             hot_input['value'] = str(hot_input['value'])
-    iv = dict((i['name'], i['value']) for i in c['inputs'])
+    iv = {i['name']: i['value'] for i in c['inputs']}
     # The group property indicates whether it is softwarecomponent or
     # plain softwareconfig
     # If it is softwarecomponent, pick up a property config to invoke
@@ -132,15 +132,15 @@ def invoke_hook(c, log):
                     break
         if not found:
             log.warning('Skipping group %s, no valid script is defined'
-                        ' for deploy action %s' % (group, action))
+                        ' for deploy action %s', group, action)
             return
 
     # check to see if this config is already deployed
     deployed_path = os.path.join(DEPLOYED_DIR, '%s.json' % c['id'])
 
     if os.path.exists(deployed_path):
-        log.warning('Skipping config %s, already deployed' % c['id'])
-        log.warning('To force-deploy, rm %s' % deployed_path)
+        log.warning('Skipping config %s, already deployed', c['id'])
+        log.warning('To force-deploy, rm %s', deployed_path)
         return
 
     signal_data = {}
@@ -148,8 +148,8 @@ def invoke_hook(c, log):
 
     if not hook_path:
         if not c['group'] in WHITELISTED_MISSING_HOOK_SCRIPTS:
-            log.error('Skipping group %s with no hook script %s' % (
-                c['group'], hook_path))
+            log.error('Skipping group %s with no hook script %s',
+                      c['group'], hook_path)
         return
 
     # write out config, which indicates it is deployed regardless of
@@ -158,7 +158,7 @@ def invoke_hook(c, log):
             deployed_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
         json.dump(c, f, indent=2, separators=(',', ': '))
 
-    log.debug('Running %s < %s' % (hook_path, deployed_path))
+    log.debug('Running %s < %s', hook_path, deployed_path)
     subproc = subprocess.Popen([hook_path],
                                stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE,
@@ -170,15 +170,14 @@ def invoke_hook(c, log):
     log.debug(stderr)
 
     if subproc.returncode:
-        log.error("Error running %s. [%s]\n" % (
-            hook_path, subproc.returncode))
+        log.error("Error running %s. [%s]\n", hook_path, subproc.returncode)
         signal_data = {
             'deploy_stdout': stdout.decode("utf-8", "replace"),
             'deploy_stderr': stderr.decode("utf-8", "replace"),
             'deploy_status_code': subproc.returncode,
         }
     else:
-        log.info('Completed %s' % hook_path)
+        log.info('Completed %s', hook_path)
 
     try:
         if stdout:
@@ -196,8 +195,8 @@ def invoke_hook(c, log):
             signal_data_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as f:
         json.dump(signal_data, f, indent=2, separators=(',', ': '))
 
-    log.debug('Running %s %s < %s' % (
-        HEAT_CONFIG_NOTIFY, deployed_path, signal_data_path))
+    log.debug('Running %s %s < %s',
+              HEAT_CONFIG_NOTIFY, deployed_path, signal_data_path)
     subproc = subprocess.Popen([HEAT_CONFIG_NOTIFY, deployed_path],
                                stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE,
@@ -209,7 +208,7 @@ def invoke_hook(c, log):
 
     if subproc.returncode:
         log.error(
-            "Error running heat-config-notify. [%s]\n" % subproc.returncode)
+            "Error running heat-config-notify. [%s]\n", subproc.returncode)
         log.error(stderr)
     else:
         log.debug(stderr)
