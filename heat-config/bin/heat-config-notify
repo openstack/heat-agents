@@ -33,7 +33,7 @@ except ImportError:
     ksclient = None
 
 try:
-    from zaqarclient.queues.v1 import client as zaqarclient
+    from zaqarclient.queues.v2 import client as zaqarclient
 except ImportError:
     zaqarclient = None
 
@@ -152,7 +152,7 @@ def main(argv=sys.argv, stdin=sys.stdin):
                 }
             }
         }
-        cli = zaqarclient.Client(endpoint, conf=conf, version=1.1)
+        cli = zaqarclient.Client(endpoint, version=2, conf=conf)
         queue = cli.queue(queue_id)
         r = queue.post({'body': signal_data, 'ttl': 600})
         log.debug('Response %s', r)
