@@ -18,7 +18,6 @@ import os
 import yaml
 
 from tests import common
-from testtools import testcase
 
 log = logging.getLogger('test_hook_salt')
 
@@ -85,7 +84,6 @@ class HookSaltTest(common.RunScriptTest):
             conf_file.write("cachedir: %s\n" % self.minion_cach_dir.join())
             conf_file.write("log_level: DEBUG\n")
 
-    @testcase.skip("Skip untill salt issue resolved")
     def test_hook(self):
 
         self.data['config'] = slsok
@@ -103,7 +101,6 @@ class HookSaltTest(common.RunScriptTest):
         self.assertEqual({'bar': 'foo', 'foo': 'bar'},
                          list(resp.values())[0]['changes'])
 
-    @testcase.skip("Skip untill salt issue resolved")
     def test_hook_salt_failed(self):
 
         self.data['config'] = slsfail
@@ -121,7 +118,6 @@ class HookSaltTest(common.RunScriptTest):
         self.assertIsNotNone(jsonout.get("deploy_stderr"))
         self.assertIn("was not found in SLS", jsonout.get("deploy_stderr"))
 
-    @testcase.skip("Skip untill salt issue resolved")
     def test_hook_salt_retcode(self):
 
         self.data['config'] = slsnotallowed
